@@ -5,7 +5,9 @@ import { GUI } from 'lil-gui'
 /**
  * GUI
  */
-const gui = new GUI()
+const gui = new GUI({
+    closeFolders: true,
+})
 
 /**
  * Canvas
@@ -44,32 +46,53 @@ const plane = new THREE.Mesh(
 plane.rotation.x = -Math.PI / 2
 scene.add(plane)
 
-const cube1 = new THREE.Mesh(
-    new THREE.BoxGeometry(10, 10, 10),
-    new THREE.MeshPhongMaterial({ color: '#ffb300' }),
-)
-
-const cube2 = new THREE.Mesh(
-    new THREE.BoxGeometry(10, 10, 10),
-    new THREE.MeshPhongMaterial({ color: '#19ef76' }),
-)
-
-cube2.position.x = 20
-cube2.position.z = 10
+const CUBE_SIZE = 10
+const MAX_CUBE_COUNT = 5
 
 const cubesGroup = new THREE.Group()
-cubesGroup.add(cube1, cube2)
+
+const renderRow = (row) => {
+    const rowGroup = new THREE.Group()
+    const offset = MAX_CUBE_COUNT - row
+
+    for (let i = 0; i < row; i++) {
+        const cube = new THREE.Mesh(
+            new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE),
+            new THREE.MeshPhongMaterial({ color: '#19ef76' }),
+        )
+
+        cube.position.x += CUBE_SIZE * i * 2
+        rowGroup.add(cube)
+    }
+
+    rowGroup.position.y = (5 - row) * CUBE_SIZE
+    rowGroup.position.x += offset * CUBE_SIZE
+    return rowGroup
+}
+
+for (let i = MAX_CUBE_COUNT; i > 0; i--) {
+    const row = renderRow(i)
+    cubesGroup.add(row)
+}
 
 scene.add(cubesGroup)
-cubesGroup.position.y = cube1.geometry.parameters.height / 2
+cubesGroup.position.y = CUBE_SIZE / 2
+cubesGroup.position.x = -CUBE_SIZE * 4
 
 const cubesFolder = gui.addFolder('Cubes')
-cubesGroup.children.forEach((cube, i) => {
-    const singleCubeFolder = cubesFolder.addFolder(`Cube ${i + 1}`)
+cubesFolder.open()
 
-    singleCubeFolder.addColor(cube.material, 'color')
-    singleCubeFolder.add(cube.position, 'x').min(-45).max(45)
-    singleCubeFolder.add(cube.position, 'z').min(-45).max(45)
+let cubeCount = 1
+cubesGroup.children.forEach((row, i) => {
+    row.children.forEach((cube, j) => {
+        const singleCubeFolder = cubesFolder.addFolder(`Cube ${cubeCount}`)
+
+        singleCubeFolder.addColor(cube.material, 'color')
+        singleCubeFolder.add(cube.position, 'x').min(-45).max(45)
+        singleCubeFolder.add(cube.position, 'z').min(-45).max(45)
+
+        cubeCount++
+    })
 })
 
 /**
@@ -86,6 +109,8 @@ const directionalLightHelper = new THREE.DirectionalLightHelper(
     directionalLight,
 )
 scene.add(directionalLightHelper)
+
+directionalLightHelper.visible = false
 
 const directionalLightFolder = gui.addFolder('Directional light')
 directionalLightFolder.addColor(directionalLight, 'color')
