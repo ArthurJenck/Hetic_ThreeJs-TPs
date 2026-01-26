@@ -261,7 +261,7 @@ const tick = () => {
     const elapsedTime = clock.getElapsedTime()
     controls.update()
 
-    const speed = 5
+    const speed = 4
 
     const boundary =
         plane.geometry.parameters.width / 2 - cube.geometry.parameters.width / 2
@@ -269,18 +269,22 @@ const tick = () => {
     if (navigationKeys.ArrowUp && bodyGroup.position.z > -boundary) {
         // cube.position.z -= speed
         bodyGroup.position.z -= speed
+        bodyGroup.rotation.y -= speed
     }
     if (navigationKeys.ArrowDown && bodyGroup.position.z < boundary) {
         // cube.position.z += speed
         bodyGroup.position.z += speed
+        bodyGroup.rotation.y += speed
     }
     if (navigationKeys.ArrowLeft && bodyGroup.position.x > -boundary) {
         // bodyGroup.position.x -= speed
         bodyGroup.position.x -= speed
+        bodyGroup.rotation.y -= speed
     }
     if (navigationKeys.ArrowRight && bodyGroup.position.x < boundary) {
         // cube.position.x += speed
         bodyGroup.position.x += speed
+        bodyGroup.rotation.y += speed
     }
 
     renderer.render(scene, camera)
