@@ -13,7 +13,6 @@ const gui = new GUI()
 const canvas = document.querySelector('canvas.webgl')
 
 const scene = new THREE.Scene()
-scene.background = new THREE.Color('#6887ed')
 
 const sizes = {
     width: window.innerWidth,
@@ -38,13 +37,40 @@ scene.add(camera)
 /**
  * Objects
  */
-const cube = new THREE.Mesh(
-    new THREE.BoxGeometry(20, 20, 20),
-    // new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true }),
-    new THREE.MeshPhongMaterial({ color: 'red' }),
+const plane = new THREE.Mesh(
+    new THREE.PlaneGeometry(100, 100),
+    new THREE.MeshPhongMaterial({ color: 0xffffff }),
+)
+plane.rotation.x = -Math.PI / 2
+scene.add(plane)
+
+const cube1 = new THREE.Mesh(
+    new THREE.BoxGeometry(10, 10, 10),
+    new THREE.MeshPhongMaterial({ color: '#ffb300' }),
 )
 
-scene.add(cube)
+const cube2 = new THREE.Mesh(
+    new THREE.BoxGeometry(10, 10, 10),
+    new THREE.MeshPhongMaterial({ color: '#19ef76' }),
+)
+
+cube2.position.x = 20
+cube2.position.z = 10
+
+const cubesGroup = new THREE.Group()
+cubesGroup.add(cube1, cube2)
+
+scene.add(cubesGroup)
+cubesGroup.position.y = cube1.geometry.parameters.height / 2
+
+const cubesFolder = gui.addFolder('Cubes')
+cubesGroup.children.forEach((cube, i) => {
+    const singleCubeFolder = cubesFolder.addFolder(`Cube ${i + 1}`)
+
+    singleCubeFolder.addColor(cube.material, 'color')
+    singleCubeFolder.add(cube.position, 'x').min(-45).max(45)
+    singleCubeFolder.add(cube.position, 'z').min(-45).max(45)
+})
 
 /**
  * Lights
