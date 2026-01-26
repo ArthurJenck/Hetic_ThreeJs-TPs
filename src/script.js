@@ -22,6 +22,14 @@ const sizes = {
 }
 
 /**
+ * Axes helper
+ */
+const axesHelper = new THREE.AxesHelper(sizes.width, sizes.height)
+scene.add(axesHelper)
+
+axesHelper.visible = false
+
+/**
  * Camera
  */
 const camera = new THREE.PerspectiveCamera(
@@ -31,7 +39,7 @@ const camera = new THREE.PerspectiveCamera(
     1550,
 )
 
-camera.position.set(50, 40, 40)
+camera.position.set(60, 60, 70)
 camera.lookAt(0, 0, 0)
 
 scene.add(camera)
@@ -40,19 +48,35 @@ scene.add(camera)
  * Objects
  */
 const plane = new THREE.Mesh(
-    new THREE.PlaneGeometry(100, 100),
+    new THREE.PlaneGeometry(150, 150),
     new THREE.MeshPhongMaterial({ color: 0xffffff }),
 )
 plane.rotation.x = -Math.PI / 2
 scene.add(plane)
 
-const sphere = new THREE.Mesh(
-    new THREE.SphereGeometry(5),
-    new THREE.MeshPhongMaterial({ color: 'yellow' }),
-)
-scene.add(sphere)
+const GRID_SIDE = 10
 
-sphere.position.y += sphere.geometry.parameters.radius + 1
+const gridGroup = new THREE.Group()
+
+for (let i = 0; i < GRID_SIDE; i++) {
+    const rowGroup = new THREE.Group()
+
+    for (let j = 0; j < GRID_SIDE; j++) {
+        const sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(1),
+            new THREE.MeshPhongMaterial({ color: 'yellow' }),
+        )
+        sphere.position.x += GRID_SIDE * j
+        rowGroup.add(sphere)
+    }
+
+    rowGroup.position.z = GRID_SIDE * i
+    gridGroup.add(rowGroup)
+}
+
+gridGroup.translateX(-45)
+gridGroup.translateZ(-45)
+scene.add(gridGroup)
 
 /**
  * Lights
@@ -115,8 +139,15 @@ const tick = () => {
     const elapsedTime = clock.getElapsedTime()
     controls.update()
 
-    sphere.position.x = Math.sin(elapsedTime) * 30
-    sphere.position.z = -Math.cos(elapsedTime) * 30
+    for (const [rowIndex, row] of gridGroup.children.entries()) {
+        for (const [sphereIndex, sphere] of row.children.entries()) {
+            sphere.position.y =
+                Math.sin(elapsedTime * 3 + sphereIndex * 0.4 + rowIndex * 0.4) *
+                    2 +
+                2 +
+                sphere.geometry.parameters.radius
+        }
+    }
 
     renderer.render(scene, camera)
     requestAnimationFrame(tick)
