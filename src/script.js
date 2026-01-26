@@ -61,16 +61,22 @@ const cube = new THREE.Mesh(
 
 cube.position.y += cube.geometry.parameters.height / 2
 
+const navigationKeys = {
+    ArrowUp: false,
+    ArrowDown: false,
+    ArrowLeft: false,
+    ArrowRight: false,
+}
+
 window.addEventListener('keydown', (e) => {
-    console.log(e.key)
-    if (e.key === 'ArrowUp') {
-        cube.position.z -= 1
-    } else if (e.key === 'ArrowDown') {
-        cube.position.z += 1
-    } else if (e.key === 'ArrowLeft') {
-        cube.position.x -= 1
-    } else if (e.key === 'ArrowRight') {
-        cube.position.x += 1
+    if (e.key in navigationKeys) {
+        navigationKeys[e.key] = true
+    }
+})
+
+window.addEventListener('keyup', (e) => {
+    if (e.key in navigationKeys) {
+        navigationKeys[e.key] = false
     }
 })
 
@@ -136,6 +142,24 @@ const clock = new THREE.Clock()
 const tick = () => {
     const elapsedTime = clock.getElapsedTime()
     controls.update()
+
+    const speed = 5
+
+    const boundary =
+        plane.geometry.parameters.width / 2 - cube.geometry.parameters.width / 2
+
+    if (navigationKeys.ArrowUp && cube.position.z > -boundary) {
+        cube.position.z -= speed
+    }
+    if (navigationKeys.ArrowDown && cube.position.z < boundary) {
+        cube.position.z += speed
+    }
+    if (navigationKeys.ArrowLeft && cube.position.x > -boundary) {
+        cube.position.x -= speed
+    }
+    if (navigationKeys.ArrowRight && cube.position.x < boundary) {
+        cube.position.x += speed
+    }
 
     renderer.render(scene, camera)
     requestAnimationFrame(tick)
