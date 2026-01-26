@@ -141,11 +141,19 @@ const tick = () => {
 
     for (const [rowIndex, row] of gridGroup.children.entries()) {
         for (const [sphereIndex, sphere] of row.children.entries()) {
+            const waveSpacingFactor = 0.4
+            const waveSpeedFactor = 3
+            const amplitudeFactor = 2
+            const lowestY = sphere.geometry.parameters.radius + 2
+
             sphere.position.y =
-                Math.sin(elapsedTime * 3 + sphereIndex * 0.4 + rowIndex * 0.4) *
-                    2 +
-                2 +
-                sphere.geometry.parameters.radius
+                Math.sin(
+                    elapsedTime * waveSpeedFactor +
+                        sphereIndex * waveSpacingFactor +
+                        rowIndex * waveSpacingFactor,
+                ) *
+                    amplitudeFactor +
+                lowestY
         }
     }
 
