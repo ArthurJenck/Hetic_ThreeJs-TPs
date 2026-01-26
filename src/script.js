@@ -6,7 +6,7 @@ import { GUI } from 'lil-gui'
  * GUI
  */
 const gui = new GUI({
-    closeFolders: true,
+    // closeFolders: true,
 })
 
 /**
@@ -80,7 +80,121 @@ window.addEventListener('keyup', (e) => {
     }
 })
 
-scene.add(cube)
+// scene.add(cube)
+
+const bodyGroup = new THREE.Group()
+const bodyFolder = gui.addFolder('Body')
+
+const head = new THREE.Mesh(
+    new THREE.SphereGeometry(5),
+    new THREE.MeshPhongMaterial({ color: 0xff0000 }),
+)
+
+head.position.y += 39.5
+bodyGroup.add(head)
+
+const headFolder = bodyFolder.addFolder('Head')
+
+headFolder.add(head.position, 'x').min(-20).max(20).step(0.1)
+headFolder.add(head.position, 'y').min(-50).max(50).step(0.1)
+
+const torso = new THREE.Mesh(
+    new THREE.BoxGeometry(10, 15, 2.5),
+    new THREE.MeshPhongMaterial({ color: 0xff0000 }),
+)
+
+torso.position.y += 27
+bodyGroup.add(torso)
+
+const torsoFolder = bodyFolder.addFolder('Torso')
+
+torsoFolder.add(torso.position, 'x').min(-20).max(20).step(0.1)
+torsoFolder.add(torso.position, 'y').min(-50).max(50).step(0.1)
+
+const arm1 = new THREE.Mesh(
+    new THREE.BoxGeometry(2.5, 10, 2.5),
+    new THREE.MeshPhongMaterial({ color: 0xff0000 }),
+)
+
+arm1.position.y += 30.2
+arm1.position.x -= 5.9
+
+arm1.rotation.z += -Math.PI * 0.2
+
+const arm1Folder = bodyFolder.addFolder('Arm 1')
+
+arm1Folder.add(arm1.position, 'x').min(-20).max(20).step(0.1)
+arm1Folder.add(arm1.position, 'y').min(-50).max(50).step(0.1)
+
+arm1Folder
+    .add(arm1.rotation, 'z')
+    .min(-Math.PI)
+    .max(Math.PI)
+    .step(0.1)
+    .name('rotation')
+
+const arm2 = new THREE.Mesh(
+    new THREE.BoxGeometry(2.5, 10, 2.5),
+    new THREE.MeshPhongMaterial({ color: 0xff0000 }),
+)
+
+arm2.position.y += 30.2
+arm2.position.x += 5.9
+
+arm2.rotation.z += Math.PI * 0.2
+
+const arm2Folder = bodyFolder.addFolder('Arm 2')
+
+arm2Folder.add(arm2.position, 'x').min(-20).max(20).step(0.1)
+arm2Folder.add(arm2.position, 'y').min(-50).max(50).step(0.1)
+
+arm2Folder
+    .add(arm2.rotation, 'z')
+    .min(-Math.PI)
+    .max(Math.PI)
+    .step(0.1)
+    .name('rotation')
+
+bodyGroup.add(arm1, arm2)
+
+const leg1 = new THREE.Mesh(
+    new THREE.BoxGeometry(4, 10, 2.5),
+    new THREE.MeshPhongMaterial({ color: 0xff0000 }),
+)
+
+leg1.position.y += 15
+leg1.position.x -= 3
+
+const leg1Folder = bodyFolder.addFolder('Leg 1')
+
+leg1Folder.add(leg1.position, 'x').min(-20).max(20).step(0.1)
+leg1Folder.add(leg1.position, 'y').min(-50).max(50).step(0.1)
+
+const leg2 = new THREE.Mesh(
+    new THREE.BoxGeometry(4, 10, 2.5),
+    new THREE.MeshPhongMaterial({ color: 0xff0000 }),
+)
+
+leg2.position.y += 15
+leg2.position.x += 3
+
+const leg2Folder = bodyFolder.addFolder('Leg 2')
+
+leg2Folder.add(leg2.position, 'x').min(-20).max(20).step(0.1)
+leg2Folder.add(leg2.position, 'y').min(-50).max(50).step(0.1)
+
+bodyGroup.add(leg1, leg2)
+
+scene.add(bodyGroup)
+
+const bodyGroupFolder = bodyFolder.addFolder('Whole body')
+
+bodyGroupFolder.add(bodyGroup.position, 'x').min(-20).max(20).step(0.1)
+bodyGroupFolder.add(bodyGroup.position, 'z').min(-20).max(20).step(0.1)
+
+bodyGroupFolder.add(bodyGroup.position, 'y').min(-20).max(20).step(0.1)
+
+bodyGroup.position.y -= 10
 
 /**
  * Lights
@@ -100,6 +214,9 @@ scene.add(directionalLightHelper)
 directionalLightHelper.visible = false
 
 const directionalLightFolder = gui.addFolder('Directional light')
+
+directionalLightFolder.close()
+
 directionalLightFolder.addColor(directionalLight, 'color')
 directionalLightFolder
     .add(directionalLight.position, 'x')
@@ -107,12 +224,13 @@ directionalLightFolder
     .max(25)
     .step(0.001)
 directionalLightFolder
-    .add(directionalLight.position, 'y')
+    .add(directionalLight.position, 'z')
     .min(-25)
     .max(25)
     .step(0.001)
+
 directionalLightFolder
-    .add(directionalLight.position, 'z')
+    .add(directionalLight.position, 'y')
     .min(-25)
     .max(25)
     .step(0.001)
@@ -148,17 +266,21 @@ const tick = () => {
     const boundary =
         plane.geometry.parameters.width / 2 - cube.geometry.parameters.width / 2
 
-    if (navigationKeys.ArrowUp && cube.position.z > -boundary) {
-        cube.position.z -= speed
+    if (navigationKeys.ArrowUp && bodyGroup.position.z > -boundary) {
+        // cube.position.z -= speed
+        bodyGroup.position.z -= speed
     }
-    if (navigationKeys.ArrowDown && cube.position.z < boundary) {
-        cube.position.z += speed
+    if (navigationKeys.ArrowDown && bodyGroup.position.z < boundary) {
+        // cube.position.z += speed
+        bodyGroup.position.z += speed
     }
-    if (navigationKeys.ArrowLeft && cube.position.x > -boundary) {
-        cube.position.x -= speed
+    if (navigationKeys.ArrowLeft && bodyGroup.position.x > -boundary) {
+        // bodyGroup.position.x -= speed
+        bodyGroup.position.x -= speed
     }
-    if (navigationKeys.ArrowRight && cube.position.x < boundary) {
-        cube.position.x += speed
+    if (navigationKeys.ArrowRight && bodyGroup.position.x < boundary) {
+        // cube.position.x += speed
+        bodyGroup.position.x += speed
     }
 
     renderer.render(scene, camera)
