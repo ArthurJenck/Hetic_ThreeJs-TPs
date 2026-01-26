@@ -46,54 +46,13 @@ const plane = new THREE.Mesh(
 plane.rotation.x = -Math.PI / 2
 scene.add(plane)
 
-const CUBE_SIZE = 10
-const MAX_CUBE_COUNT = 5
+const sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(5),
+    new THREE.MeshPhongMaterial({ color: 'yellow' }),
+)
+scene.add(sphere)
 
-const cubesGroup = new THREE.Group()
-
-const renderRow = (row) => {
-    const rowGroup = new THREE.Group()
-    const offset = MAX_CUBE_COUNT - row
-
-    for (let i = 0; i < row; i++) {
-        const cube = new THREE.Mesh(
-            new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE),
-            new THREE.MeshPhongMaterial({ color: '#19ef76' }),
-        )
-
-        cube.position.x += CUBE_SIZE * i * 2
-        rowGroup.add(cube)
-    }
-
-    rowGroup.position.y = (5 - row) * CUBE_SIZE
-    rowGroup.position.x += offset * CUBE_SIZE
-    return rowGroup
-}
-
-for (let i = MAX_CUBE_COUNT; i > 0; i--) {
-    const row = renderRow(i)
-    cubesGroup.add(row)
-}
-
-scene.add(cubesGroup)
-cubesGroup.position.y = CUBE_SIZE / 2
-cubesGroup.position.x = -CUBE_SIZE * 4
-
-const cubesFolder = gui.addFolder('Cubes')
-cubesFolder.open()
-
-let cubeCount = 1
-cubesGroup.children.forEach((row, i) => {
-    row.children.forEach((cube, j) => {
-        const singleCubeFolder = cubesFolder.addFolder(`Cube ${cubeCount}`)
-
-        singleCubeFolder.addColor(cube.material, 'color')
-        singleCubeFolder.add(cube.position, 'x').min(-45).max(45)
-        singleCubeFolder.add(cube.position, 'z').min(-45).max(45)
-
-        cubeCount++
-    })
-})
+sphere.position.y += sphere.geometry.parameters.radius + 1
 
 /**
  * Lights
@@ -155,6 +114,9 @@ const clock = new THREE.Clock()
 const tick = () => {
     const elapsedTime = clock.getElapsedTime()
     controls.update()
+
+    sphere.position.x = Math.sin(elapsedTime) * 30
+    sphere.position.z = -Math.cos(elapsedTime) * 30
 
     renderer.render(scene, camera)
     requestAnimationFrame(tick)
