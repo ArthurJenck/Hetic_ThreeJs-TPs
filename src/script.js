@@ -54,29 +54,27 @@ const plane = new THREE.Mesh(
 plane.rotation.x = -Math.PI / 2
 scene.add(plane)
 
-const GRID_SIDE = 10
+const cube = new THREE.Mesh(
+    new THREE.BoxGeometry(10, 10, 10),
+    new THREE.MeshPhongMaterial({ color: 0xff0000 }),
+)
 
-const gridGroup = new THREE.Group()
+cube.position.y += cube.geometry.parameters.height / 2
 
-for (let i = 0; i < GRID_SIDE; i++) {
-    const rowGroup = new THREE.Group()
-
-    for (let j = 0; j < GRID_SIDE; j++) {
-        const sphere = new THREE.Mesh(
-            new THREE.SphereGeometry(1),
-            new THREE.MeshPhongMaterial({ color: 'yellow' }),
-        )
-        sphere.position.x += GRID_SIDE * j
-        rowGroup.add(sphere)
+window.addEventListener('keydown', (e) => {
+    console.log(e.key)
+    if (e.key === 'ArrowUp') {
+        cube.position.z -= 1
+    } else if (e.key === 'ArrowDown') {
+        cube.position.z += 1
+    } else if (e.key === 'ArrowLeft') {
+        cube.position.x -= 1
+    } else if (e.key === 'ArrowRight') {
+        cube.position.x += 1
     }
+})
 
-    rowGroup.position.z = GRID_SIDE * i
-    gridGroup.add(rowGroup)
-}
-
-gridGroup.translateX(-45)
-gridGroup.translateZ(-45)
-scene.add(gridGroup)
+scene.add(cube)
 
 /**
  * Lights
@@ -138,24 +136,6 @@ const clock = new THREE.Clock()
 const tick = () => {
     const elapsedTime = clock.getElapsedTime()
     controls.update()
-
-    for (const [rowIndex, row] of gridGroup.children.entries()) {
-        for (const [sphereIndex, sphere] of row.children.entries()) {
-            const waveSpacingFactor = 0.4
-            const waveSpeedFactor = 3
-            const amplitudeFactor = 2
-            const lowestY = sphere.geometry.parameters.radius + 2
-
-            sphere.position.y =
-                Math.sin(
-                    elapsedTime * waveSpeedFactor +
-                        sphereIndex * waveSpacingFactor +
-                        rowIndex * waveSpacingFactor,
-                ) *
-                    amplitudeFactor +
-                lowestY
-        }
-    }
 
     renderer.render(scene, camera)
     requestAnimationFrame(tick)
