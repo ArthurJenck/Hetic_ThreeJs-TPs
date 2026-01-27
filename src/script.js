@@ -1,9 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { GUI } from 'lil-gui'
-import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js'
-
-RectAreaLightUniformsLib.init()
 
 /**
  * GUI
@@ -28,6 +25,67 @@ const sizes = {
  * Textures
  */
 const textureLoader = new THREE.TextureLoader()
+
+// const groundArmTexture = textureLoader.load('/ground/brown_mud_dry_1k/arm.jpg')
+// const groundColorTexture = textureLoader.load(
+//     '/ground/brown_mud_dry_1k/diff.jpg',
+// )
+// const groundNormalTexture = textureLoader.load(
+//     '/ground/brown_mud_dry_1k/nor_gl.jpg',
+// )
+const groundArmTexture = textureLoader.load(
+    '/ground/rock_embedded_floor_1k/arm.jpg',
+)
+const groundColorTexture = textureLoader.load(
+    '/ground/rock_embedded_floor_1k/diff.jpg',
+)
+const groundNormalTexture = textureLoader.load(
+    '/ground/rock_embedded_floor_1k/nor_gl.jpg',
+)
+
+groundColorTexture.colorSpace = THREE.SRGBColorSpace
+
+groundColorTexture.repeat.set(8, 8)
+groundArmTexture.repeat.set(8, 8)
+groundNormalTexture.repeat.set(8, 8)
+
+groundColorTexture.wrapS = THREE.RepeatWrapping
+groundArmTexture.wrapS = THREE.RepeatWrapping
+groundNormalTexture.wrapS = THREE.RepeatWrapping
+
+groundColorTexture.wrapT = THREE.RepeatWrapping
+groundArmTexture.wrapT = THREE.RepeatWrapping
+groundNormalTexture.wrapT = THREE.RepeatWrapping
+
+// const wallArmTexture = textureLoader.load(
+//     '/wall/castle_brick_02_white_1k/arm.jpg',
+// )
+// const wallColorTexture = textureLoader.load(
+//     '/wall/castle_brick_02_white_1k/diff.jpg',
+// )
+// const wallNormalTexture = textureLoader.load(
+//     '/wall/castle_brick_02_white_1k/nor_gl.jpg',
+// )
+
+const wallArmTexture = textureLoader.load('/wall/floor_bricks_02_1k/arm.jpg')
+const wallColorTexture = textureLoader.load('/wall/floor_bricks_02_1k/diff.jpg')
+const wallNormalTexture = textureLoader.load(
+    '/wall/floor_bricks_02_1k/nor_gl.jpg',
+)
+
+wallArmTexture.colorSpace = THREE.SRGBColorSpace
+
+// wallArmTexture.repeat.set(8, 8)
+// wallColorTexture.repeat.set(8, 8)
+// wallNormalTexture.repeat.set(8, 8)
+
+// wallArmTexture.wrapS = THREE.RepeatWrapping
+// wallColorTexture.wrapS = THREE.RepeatWrapping
+// wallNormalTexture.wrapS = THREE.RepeatWrapping
+
+// wallArmTexture.wrapT = THREE.RepeatWrapping
+// wallColorTexture.wrapT = THREE.RepeatWrapping
+// wallNormalTexture.wrapT = THREE.RepeatWrapping
 
 /**
  * Axes helper
@@ -55,18 +113,14 @@ scene.add(camera)
 /**
  * Objects
  */
-const material = new THREE.MeshStandardMaterial({
-    color: 0xff0000,
-    metalness: 0.2,
-    roughness: 0,
-})
-
 const plane = new THREE.Mesh(
-    new THREE.PlaneGeometry(2000, 2000),
+    new THREE.PlaneGeometry(1000, 1000),
     new THREE.MeshStandardMaterial({
-        color: 0x808080,
-        metalness: 0,
-        roughness: 0,
+        map: groundColorTexture,
+        aoMap: groundArmTexture,
+        metalnessMap: groundArmTexture,
+        roughnessMap: groundArmTexture,
+        normalMap: groundNormalTexture,
     }),
 )
 
@@ -75,88 +129,24 @@ plane.position.y -= 50
 
 scene.add(plane)
 
-const sphere = new THREE.Mesh(new THREE.SphereGeometry(7), material)
+const wall = new THREE.Mesh(
+    new THREE.BoxGeometry(150, 100, 10),
+    new THREE.MeshStandardMaterial({
+        map: wallColorTexture,
+        aoMap: wallArmTexture,
+        metalnessMap: wallArmTexture,
+        roughnessMap: wallArmTexture,
+        normalMap: wallNormalTexture,
+    }),
+)
 
-sphere.position.x -= 15
-sphere.position.z += 15
-
-scene.add(sphere)
-
-const sphereFolder = gui.addFolder('Sphere')
-
-sphereFolder.addColor(sphere.material, 'color')
-sphereFolder.add(sphere.material, 'metalness').min(0).max(1).step(0.001)
-sphereFolder.add(sphere.material, 'roughness').min(0).max(1).step(0.001)
-
-const torusKnot = new THREE.Mesh(new THREE.TorusKnotGeometry(7, 2.5), material)
-
-torusKnot.position.x += 15
-
-scene.add(torusKnot)
-
-const torusKnotFolder = gui.addFolder('Torus knot')
-
-torusKnotFolder.addColor(sphere.material, 'color')
-torusKnotFolder.add(sphere.material, 'metalness').min(0).max(1).step(0.001)
-torusKnotFolder.add(sphere.material, 'roughness').min(0).max(1).step(0.001)
+scene.add(wall)
 
 /**
  * Lights
  */
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
+const ambientLight = new THREE.AmbientLight(0xffffff, 3)
 scene.add(ambientLight)
-
-const ambientLightFolder = gui.addFolder('Ambient light')
-
-ambientLightFolder.add(ambientLight, 'intensity').min(0).max(10).step(0.0001)
-
-const rectLight = new THREE.RectAreaLight(0xffffff, 3, 50, 50)
-
-rectLight.lookAt(0, -40, 0)
-
-scene.add(rectLight)
-
-const rectLightMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(rectLight.width, rectLight.height),
-    new THREE.MeshBasicMaterial({
-        side: THREE.DoubleSide,
-        color: rectLight.color,
-    }),
-)
-
-rectLight.add(rectLightMesh)
-
-const rectLightFolder = gui.addFolder('Rect light')
-
-const params = {
-    rotationEnabled: true,
-}
-
-const updateRectLightMesh = () => {
-    rectLightMesh.geometry.dispose()
-    rectLightMesh.geometry = new THREE.PlaneGeometry(
-        rectLight.width,
-        rectLight.height,
-    )
-
-    rectLightMesh.material.color.copy(rectLight.color)
-}
-
-rectLightFolder.add(params, 'rotationEnabled')
-rectLightFolder.addColor(rectLight, 'color').onChange(updateRectLightMesh)
-rectLightFolder
-    .add(rectLight, 'width')
-    .min(50)
-    .max(1000)
-    .step(0.0001)
-    .onChange(updateRectLightMesh)
-rectLightFolder
-    .add(rectLight, 'height')
-    .min(50)
-    .max(1000)
-    .step(0.0001)
-    .onChange(updateRectLightMesh)
-rectLightFolder.add(rectLight, 'intensity').min(0).max(10).step(0.0001)
 
 /**
  * Renderer
@@ -179,18 +169,9 @@ const controls = new OrbitControls(camera, renderer.domElement)
  * Tick
  */
 const clock = new THREE.Clock()
-const elapsedTime = clock.getElapsedTime()
-let delta = elapsedTime
 
 const tick = () => {
-    if (params.rotationEnabled) {
-        rectLight.position.x = Math.cos(delta * 1) * 100
-        rectLight.position.z = Math.sin(delta * 1) * 100
-
-        rectLight.lookAt(0, -40, 0)
-        delta += 0.02
-    }
-
+    const elapsedTime = clock.getElapsedTime()
     controls.update()
     renderer.render(scene, camera)
     requestAnimationFrame(tick)
