@@ -194,10 +194,10 @@ trackpadFloor.rotation.x = Math.PI / 2
 bottomFrameGroup.add(trackpadFloor)
 
 const trackpadBottomSide = new THREE.Mesh(
-    createRoundedBox(trackpadFloorWidth - 4, 0.5, trackpadFloorDepth - 4, 3, 3),
+    createRoundedBox(trackpadFloorWidth - 4, 1.5, trackpadFloorDepth - 4, 3, 3),
     new THREE.MeshStandardMaterial({ color: bottomFrame.material.color }),
 )
-trackpadBottomSide.position.set(trackpadFloorOffsetX, -2, 0)
+trackpadBottomSide.position.set(trackpadFloorOffsetX, -3.5, 0)
 trackpadBottomSide.rotation.x = Math.PI / 2
 bottomFrameGroup.add(trackpadBottomSide)
 
@@ -242,8 +242,6 @@ for (let row = 0; row < 6; row++) {
 keysGroup.rotation.y = Math.PI / 2
 keysGroup.position.x = -41.5
 keysGroup.position.z = 107.5
-
-laptopGroup.rotation.x = Math.PI
 
 /**
  * Lights
