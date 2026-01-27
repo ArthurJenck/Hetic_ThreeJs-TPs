@@ -120,8 +120,18 @@ const createRoundedBox = (
         bevelEnabled: true,
         bevelSegments: smoothness * 2,
         steps: 1,
-        bevelSize: radius,
-        bevelThickness: radius,
+        bevelSize: Math.min(
+            radius,
+            width / 2 - 0.01,
+            depth / 2 - 0.01,
+            height / 2 - 0.01,
+        ),
+        bevelThickness: Math.min(
+            radius,
+            width / 2 - 0.01,
+            depth / 2 - 0.01,
+            height / 2 - 0.01,
+        ),
         curveSegments: smoothness,
     })
 
@@ -137,9 +147,8 @@ const trackpadFloorWidth = 60
 const trackpadFloorDepth = 80
 const trackpadFloorOffsetX = 70
 
-// const keyboardWidth = 240
-// const keyboardDepth = 80
-// const keyboardOffsetZ = -40
+const keyboardWidth = 90
+const keyboardDepth = 240
 
 const laptopBaseMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 })
 
@@ -157,40 +166,84 @@ const bottomFrameGeometry = createRoundedBox(
             offsetX: trackpadFloorOffsetX,
             offsetY: 0,
         },
-        // {
-        //     width: keyboardWidth,
-        //     height: keyboardDepth,
-        //     radius: 5,
-        //     offsetX: 0,
-        //     offsetY: keyboardOffsetZ,
-        // },
+        {
+            width: keyboardWidth,
+            depth: keyboardDepth,
+            radius: 1.5,
+            offsetX: -10,
+            offsetY: 0,
+        },
     ],
 )
+
+const bottomFrameGroup = new THREE.Group()
+laptopGroup.add(bottomFrameGroup)
+
 const bottomFrame = new THREE.Mesh(bottomFrameGeometry, laptopBaseMaterial)
 bottomFrame.rotation.x = Math.PI / 2
-laptopGroup.add(bottomFrame)
+
+bottomFrameGroup.add(bottomFrame)
 
 // Trackpad
 const trackpadFloor = new THREE.Mesh(
-    createRoundedBox(trackpadFloorWidth - 4, 0.1, trackpadFloorDepth - 4, 3, 3),
+    createRoundedBox(trackpadFloorWidth - 4, 1, trackpadFloorDepth - 4, 3, 3),
     new THREE.MeshStandardMaterial({ color: 0x424242 }),
 )
-trackpadFloor.position.set(trackpadFloorOffsetX, -1.5, 0)
+trackpadFloor.position.set(trackpadFloorOffsetX, 0.5, 0)
 trackpadFloor.rotation.x = Math.PI / 2
-laptopGroup.add(trackpadFloor)
+bottomFrameGroup.add(trackpadFloor)
 
 const trackpadBottomSide = new THREE.Mesh(
-    createRoundedBox(trackpadFloorWidth - 4, 1.1, trackpadFloorDepth - 4, 3, 3),
+    createRoundedBox(trackpadFloorWidth - 4, 0.5, trackpadFloorDepth - 4, 3, 3),
     new THREE.MeshStandardMaterial({ color: bottomFrame.material.color }),
 )
 trackpadBottomSide.position.set(trackpadFloorOffsetX, -2, 0)
 trackpadBottomSide.rotation.x = Math.PI / 2
-laptopGroup.add(trackpadBottomSide)
+bottomFrameGroup.add(trackpadBottomSide)
 
-// const keyboardBaseGeometry =
-// const keyboardBase = new THREE.Mesh(keyboardBaseGeometry, laptopBaseMaterial);
-// keyboardBase.position.set(0, -1, -keyboardOffsetZ);
-// laptopBase.add(keyboardBase);
+const keyboardGroup = new THREE.Group()
+bottomFrameGroup.add(keyboardGroup)
+
+const keyboardBaseGeometry = createRoundedBox(
+    keyboardWidth - 4,
+    baseHeight - 1.5,
+    keyboardDepth - 4,
+    2,
+    3,
+)
+
+const keyboardBase = new THREE.Mesh(keyboardBaseGeometry, bottomFrame.material)
+keyboardBase.position.set(-10, -1.5, 0)
+keyboardBase.rotation.x = Math.PI / 2
+keyboardGroup.add(keyboardBase)
+
+const keysGroup = new THREE.Group()
+keyboardGroup.add(keysGroup)
+
+for (let row = 0; row < 6; row++) {
+    for (let i = 0; i < 14; i++) {
+        const key = new THREE.Mesh(
+            createRoundedBox(9, 1, 9, 0.5, 1),
+            new THREE.MeshPhongMaterial({ color: 0xffffff }),
+        )
+
+        const offsetX = (i * 5) / 2 - 5 / 2
+        key.position.x = i * 5 * 3.75 - offsetX
+
+        key.position.z = row * 5 * 1.25 * 2
+        key.position.y += 1
+
+        key.rotation.x = Math.PI / 2
+
+        keysGroup.add(key)
+    }
+}
+
+keysGroup.rotation.y = Math.PI / 2
+keysGroup.position.x = -41.5
+keysGroup.position.z = 107.5
+
+laptopGroup.rotation.x = Math.PI
 
 /**
  * Lights
