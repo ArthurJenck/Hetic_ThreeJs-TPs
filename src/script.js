@@ -220,19 +220,44 @@ keyboardGroup.add(keyboardBase)
 const keysGroup = new THREE.Group()
 keyboardGroup.add(keysGroup)
 
+const KEY_SIZE = 9
+const KEY_SPACING_X = 5 * 3.3
+const KEY_SPACING_Z = 5 * 1.25 * 2
+const SPACE_KEYS = 5
+
 for (let row = 0; row < 6; row++) {
     for (let i = 0; i < 14; i++) {
+        if (row === 5 && i === 4) {
+            const span = SPACE_KEYS
+
+            const spaceWidth =
+                KEY_SIZE * span + (span - 1) * (KEY_SPACING_X - KEY_SIZE)
+
+            const space = new THREE.Mesh(
+                createRoundedBox(spaceWidth, 1, KEY_SIZE, 0.5, 1),
+                new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 0 }),
+            )
+
+            space.position.x =
+                i * KEY_SPACING_X + ((span - 1) * KEY_SPACING_X) / 2
+            space.position.z = row * KEY_SPACING_Z
+            space.position.y = 1
+            space.rotation.x = Math.PI / 2
+
+            keysGroup.add(space)
+
+            i += span - 1
+            continue
+        }
+
         const key = new THREE.Mesh(
-            createRoundedBox(9, 1, 9, 0.5, 1),
+            createRoundedBox(KEY_SIZE, 1, KEY_SIZE, 0.5, 1),
             new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 0 }),
         )
 
-        const offsetX = (i * 5) / 2 - 5 / 2
-        key.position.x = i * 5 * 3.75 - offsetX
-
-        key.position.z = row * 5 * 1.25 * 2
-        key.position.y += 1
-
+        key.position.x = i * KEY_SPACING_X
+        key.position.z = row * KEY_SPACING_Z
+        key.position.y = 1
         key.rotation.x = Math.PI / 2
 
         keysGroup.add(key)
