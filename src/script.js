@@ -75,17 +75,17 @@ const wallNormalTexture = textureLoader.load(
 
 wallArmTexture.colorSpace = THREE.SRGBColorSpace
 
-// wallArmTexture.repeat.set(8, 8)
-// wallColorTexture.repeat.set(8, 8)
-// wallNormalTexture.repeat.set(8, 8)
+wallArmTexture.repeat.set(4, 4)
+wallColorTexture.repeat.set(4, 4)
+wallNormalTexture.repeat.set(4, 4)
 
-// wallArmTexture.wrapS = THREE.RepeatWrapping
-// wallColorTexture.wrapS = THREE.RepeatWrapping
-// wallNormalTexture.wrapS = THREE.RepeatWrapping
+wallArmTexture.wrapS = THREE.RepeatWrapping
+wallColorTexture.wrapS = THREE.RepeatWrapping
+wallNormalTexture.wrapS = THREE.RepeatWrapping
 
-// wallArmTexture.wrapT = THREE.RepeatWrapping
-// wallColorTexture.wrapT = THREE.RepeatWrapping
-// wallNormalTexture.wrapT = THREE.RepeatWrapping
+wallArmTexture.wrapT = THREE.RepeatWrapping
+wallColorTexture.wrapT = THREE.RepeatWrapping
+wallNormalTexture.wrapT = THREE.RepeatWrapping
 
 /**
  * Axes helper
@@ -130,7 +130,7 @@ plane.position.y -= 50
 scene.add(plane)
 
 const wall = new THREE.Mesh(
-    new THREE.BoxGeometry(150, 100, 10),
+    new THREE.BoxGeometry(300, 200, 10),
     new THREE.MeshStandardMaterial({
         map: wallColorTexture,
         aoMap: wallArmTexture,
