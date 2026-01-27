@@ -22,6 +22,13 @@ const sizes = {
 }
 
 /**
+ * Textures
+ */
+const textureLoader = new THREE.TextureLoader()
+const headTexture = textureLoader.load('/head-texture.jpg')
+headTexture.colorSpace = THREE.SRGBColorSpace
+
+/**
  * Axes helper
  */
 const axesHelper = new THREE.AxesHelper(sizes.width, sizes.height)
@@ -87,10 +94,12 @@ const bodyFolder = gui.addFolder('Body')
 
 const head = new THREE.Mesh(
     new THREE.SphereGeometry(5),
-    new THREE.MeshPhongMaterial({ color: 0xff0000 }),
+    // new THREE.MeshPhongMaterial({ color: 0xff0000 }),
+    new THREE.MeshBasicMaterial({ map: headTexture }),
 )
 
 head.position.y += 39.5
+head.rotation.y = -Math.PI / 2
 bodyGroup.add(head)
 
 const headFolder = bodyFolder.addFolder('Head')
@@ -244,6 +253,7 @@ const renderer = new THREE.WebGLRenderer({
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.outputColorSpace = THREE.SRGBColorSpace
 
 renderer.render(scene, camera)
 
@@ -266,27 +276,36 @@ const tick = () => {
     const boundary =
         plane.geometry.parameters.width / 2 - cube.geometry.parameters.width / 2
 
-    if (navigationKeys.ArrowUp && bodyGroup.position.z > -boundary) {
+    if (navigationKeys.ArrowUp) {
         // cube.position.z -= speed
         bodyGroup.position.z -= speed
         bodyGroup.rotation.y -= speed
     }
-    if (navigationKeys.ArrowDown && bodyGroup.position.z < boundary) {
+    if (navigationKeys.ArrowDown) {
         // cube.position.z += speed
         bodyGroup.position.z += speed
         bodyGroup.rotation.y += speed
     }
-    if (navigationKeys.ArrowLeft && bodyGroup.position.x > -boundary) {
+    if (navigationKeys.ArrowLeft) {
         // bodyGroup.position.x -= speed
         bodyGroup.position.x -= speed
         bodyGroup.rotation.y -= speed
     }
-    if (navigationKeys.ArrowRight && bodyGroup.position.x < boundary) {
+    if (navigationKeys.ArrowRight) {
         // cube.position.x += speed
         bodyGroup.position.x += speed
         bodyGroup.rotation.y += speed
     }
 
+    if (
+        boundary < bodyGroup.position.x ||
+        -boundary > bodyGroup.position.x ||
+        boundary < bodyGroup.position.z ||
+        -boundary > bodyGroup.position.z ||
+        bodyGroup.position.y < -10
+    ) {
+        bodyGroup.position.y -= 5
+    }
     renderer.render(scene, camera)
     requestAnimationFrame(tick)
 }
