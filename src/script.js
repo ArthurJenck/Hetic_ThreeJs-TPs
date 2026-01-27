@@ -145,7 +145,7 @@ const baseRadius = 2
 
 const trackpadFloorWidth = 60
 const trackpadFloorDepth = 80
-const trackpadFloorOffsetX = 70
+const trackpadFloorOffsetX = 60
 
 const keyboardWidth = 90
 const keyboardDepth = 240
@@ -170,7 +170,7 @@ const bottomFrameGeometry = createRoundedBox(
             width: keyboardWidth,
             depth: keyboardDepth,
             radius: 1.5,
-            offsetX: -10,
+            offsetX: -20,
             offsetY: 0,
         },
     ],
@@ -242,6 +242,8 @@ for (let row = 0; row < 6; row++) {
 keysGroup.rotation.y = Math.PI / 2
 keysGroup.position.x = -41.5
 keysGroup.position.z = 107.5
+
+keyboardGroup.position.x -= 10
 
 /**
  * Lights
