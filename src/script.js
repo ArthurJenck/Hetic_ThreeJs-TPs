@@ -224,7 +224,7 @@ for (let row = 0; row < 6; row++) {
     for (let i = 0; i < 14; i++) {
         const key = new THREE.Mesh(
             createRoundedBox(9, 1, 9, 0.5, 1),
-            new THREE.MeshPhongMaterial({ color: 0xffffff }),
+            new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 0 }),
         )
 
         const offsetX = (i * 5) / 2 - 5 / 2
@@ -245,14 +245,59 @@ keysGroup.position.z = 107.5
 
 keyboardGroup.position.x -= 10
 
+// Top frame
+const topFrameGroup = new THREE.Group()
+laptopGroup.add(topFrameGroup)
+
+const screenWidth = 180
+const screenHeight = 250
+
+const topFrame = new THREE.Mesh(
+    createRoundedBox(baseWidth, baseHeight, baseDepth, baseRadius, 3, [
+        {
+            width: screenWidth,
+            depth: screenHeight,
+            radius: 5,
+            offsetX: 9,
+            offsetY: 0,
+        },
+    ]),
+    new THREE.MeshPhongMaterial({ color: 0x333333 }),
+)
+
+topFrame.rotation.x += Math.PI / 2
+topFrame.rotation.y += Math.PI / 2 + 0.1
+
+topFrame.position.y += 93
+topFrame.position.x -= 116
+topFrameGroup.add(topFrame)
+
+// Top frame wall
+const topFrameWall = new THREE.Mesh(
+    createRoundedBox(screenWidth, 1.5, screenHeight, 3, 3),
+    new THREE.MeshPhongMaterial({
+        color: 0x333333,
+        specular: 0xffffff,
+        shininess: 25,
+    }),
+)
+
+topFrameWall.rotation.x += Math.PI / 2
+topFrameWall.rotation.y += Math.PI / 2 + 0.1
+
+topFrameWall.position.y += 102
+topFrameWall.position.x -= 116
+
+topFrameGroup.add(topFrameWall)
+
 /**
  * Lights
  */
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
 scene.add(ambientLight)
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 10)
-directionalLight.position.set(0, 25, 0)
+const directionalLight = new THREE.DirectionalLight(0xffffff, 5)
+directionalLight.position.set(0, 2, 0)
 scene.add(directionalLight)
 
 const directionalLightHelper = new THREE.DirectionalLightHelper(
