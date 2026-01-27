@@ -25,8 +25,6 @@ const sizes = {
  * Textures
  */
 const textureLoader = new THREE.TextureLoader()
-const headTexture = textureLoader.load('/head-texture.jpg')
-headTexture.colorSpace = THREE.SRGBColorSpace
 
 /**
  * Axes helper
@@ -46,7 +44,7 @@ const camera = new THREE.PerspectiveCamera(
     1550,
 )
 
-camera.position.set(60, 60, 70)
+camera.position.set(200, 150, 200)
 camera.lookAt(0, 0, 0)
 
 scene.add(camera)
@@ -54,156 +52,145 @@ scene.add(camera)
 /**
  * Objects
  */
+// Plane
 const plane = new THREE.Mesh(
     new THREE.PlaneGeometry(150, 150),
     new THREE.MeshPhongMaterial({ color: 0xffffff }),
 )
 plane.rotation.x = -Math.PI / 2
-scene.add(plane)
+// scene.add(plane)
 
-const cube = new THREE.Mesh(
-    new THREE.BoxGeometry(10, 10, 10),
-    new THREE.MeshPhongMaterial({ color: 0xff0000 }),
-)
+// Laptop
+const laptopGroup = new THREE.Group()
+scene.add(laptopGroup)
 
-cube.position.y += cube.geometry.parameters.height / 2
+const drawRoundedRect = (
+    target,
+    width,
+    height,
+    radius,
+    offsetX = 0,
+    offsetY = 0,
+) => {
+    const x = offsetX
+    const y = offsetY
+    const r = Math.min(radius, width / 2, height / 2)
 
-const navigationKeys = {
-    ArrowUp: false,
-    ArrowDown: false,
-    ArrowLeft: false,
-    ArrowRight: false,
+    target.moveTo(x + r, y)
+    target.lineTo(x + width - r, y)
+    target.quadraticCurveTo(x + width, y, x + width, y + r)
+    target.lineTo(x + width, y + height - r)
+    target.quadraticCurveTo(x + width, y + height, x + width - r, y + height)
+    target.lineTo(x + r, y + height)
+    target.quadraticCurveTo(x, y + height, x, y + height - r)
+    target.lineTo(x, y + r)
+    target.quadraticCurveTo(x, y, x + r, y)
+
+    return target
 }
 
-window.addEventListener('keydown', (e) => {
-    if (e.key in navigationKeys) {
-        navigationKeys[e.key] = true
+const createRoundedBox = (
+    width,
+    height,
+    depth,
+    radius,
+    smoothness,
+    holes = [],
+) => {
+    const shape = new THREE.Shape()
+    drawRoundedRect(shape, width, depth, radius, -width / 2, -depth / 2)
+
+    const holeArray = Array.isArray(holes) ? holes : holes ? [holes] : []
+
+    for (const hole of holeArray) {
+        const holePath = new THREE.Path()
+        drawRoundedRect(
+            holePath,
+            hole.width,
+            hole.depth,
+            hole.radius,
+            hole.offsetX - hole.width / 2,
+            hole.offsetY - hole.depth / 2,
+        )
+        shape.holes.push(holePath)
     }
-})
 
-window.addEventListener('keyup', (e) => {
-    if (e.key in navigationKeys) {
-        navigationKeys[e.key] = false
-    }
-})
+    const geometry = new THREE.ExtrudeGeometry(shape, {
+        depth: height,
+        bevelEnabled: true,
+        bevelSegments: smoothness * 2,
+        steps: 1,
+        bevelSize: radius,
+        bevelThickness: radius,
+        curveSegments: smoothness,
+    })
 
-// scene.add(cube)
+    return geometry
+}
 
-const bodyGroup = new THREE.Group()
-const bodyFolder = gui.addFolder('Body')
+const baseWidth = 200
+const baseDepth = 250
+const baseHeight = 4
+const baseRadius = 2
 
-const head = new THREE.Mesh(
-    new THREE.SphereGeometry(5),
-    // new THREE.MeshPhongMaterial({ color: 0xff0000 }),
-    new THREE.MeshBasicMaterial({ map: headTexture }),
+const trackpadFloorWidth = 60
+const trackpadFloorDepth = 80
+const trackpadFloorOffsetX = 70
+
+// const keyboardWidth = 240
+// const keyboardDepth = 80
+// const keyboardOffsetZ = -40
+
+const laptopBaseMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 })
+
+const bottomFrameGeometry = createRoundedBox(
+    baseWidth,
+    baseHeight,
+    baseDepth,
+    baseRadius,
+    3,
+    [
+        {
+            width: trackpadFloorWidth,
+            depth: trackpadFloorDepth,
+            radius: 5,
+            offsetX: trackpadFloorOffsetX,
+            offsetY: 0,
+        },
+        // {
+        //     width: keyboardWidth,
+        //     height: keyboardDepth,
+        //     radius: 5,
+        //     offsetX: 0,
+        //     offsetY: keyboardOffsetZ,
+        // },
+    ],
 )
+const bottomFrame = new THREE.Mesh(bottomFrameGeometry, laptopBaseMaterial)
+bottomFrame.rotation.x = Math.PI / 2
+laptopGroup.add(bottomFrame)
 
-head.position.y += 39.5
-head.rotation.y = -Math.PI / 2
-bodyGroup.add(head)
-
-const headFolder = bodyFolder.addFolder('Head')
-
-headFolder.add(head.position, 'x').min(-20).max(20).step(0.1)
-headFolder.add(head.position, 'y').min(-50).max(50).step(0.1)
-
-const torso = new THREE.Mesh(
-    new THREE.BoxGeometry(10, 15, 2.5),
-    new THREE.MeshPhongMaterial({ color: 0xff0000 }),
+// Trackpad
+const trackpadFloor = new THREE.Mesh(
+    createRoundedBox(trackpadFloorWidth - 4, 0.1, trackpadFloorDepth - 4, 3, 3),
+    new THREE.MeshStandardMaterial({ color: 0x424242 }),
 )
+trackpadFloor.position.set(trackpadFloorOffsetX, -1.5, 0)
+trackpadFloor.rotation.x = Math.PI / 2
+laptopGroup.add(trackpadFloor)
 
-torso.position.y += 27
-bodyGroup.add(torso)
-
-const torsoFolder = bodyFolder.addFolder('Torso')
-
-torsoFolder.add(torso.position, 'x').min(-20).max(20).step(0.1)
-torsoFolder.add(torso.position, 'y').min(-50).max(50).step(0.1)
-
-const arm1 = new THREE.Mesh(
-    new THREE.BoxGeometry(2.5, 10, 2.5),
-    new THREE.MeshPhongMaterial({ color: 0xff0000 }),
+const trackpadBottomSide = new THREE.Mesh(
+    createRoundedBox(trackpadFloorWidth - 4, 1.1, trackpadFloorDepth - 4, 3, 3),
+    new THREE.MeshStandardMaterial({ color: bottomFrame.material.color }),
 )
+trackpadBottomSide.position.set(trackpadFloorOffsetX, -2, 0)
+trackpadBottomSide.rotation.x = Math.PI / 2
+laptopGroup.add(trackpadBottomSide)
 
-arm1.position.y += 30.2
-arm1.position.x -= 5.9
-
-arm1.rotation.z += -Math.PI * 0.2
-
-const arm1Folder = bodyFolder.addFolder('Arm 1')
-
-arm1Folder.add(arm1.position, 'x').min(-20).max(20).step(0.1)
-arm1Folder.add(arm1.position, 'y').min(-50).max(50).step(0.1)
-
-arm1Folder
-    .add(arm1.rotation, 'z')
-    .min(-Math.PI)
-    .max(Math.PI)
-    .step(0.1)
-    .name('rotation')
-
-const arm2 = new THREE.Mesh(
-    new THREE.BoxGeometry(2.5, 10, 2.5),
-    new THREE.MeshPhongMaterial({ color: 0xff0000 }),
-)
-
-arm2.position.y += 30.2
-arm2.position.x += 5.9
-
-arm2.rotation.z += Math.PI * 0.2
-
-const arm2Folder = bodyFolder.addFolder('Arm 2')
-
-arm2Folder.add(arm2.position, 'x').min(-20).max(20).step(0.1)
-arm2Folder.add(arm2.position, 'y').min(-50).max(50).step(0.1)
-
-arm2Folder
-    .add(arm2.rotation, 'z')
-    .min(-Math.PI)
-    .max(Math.PI)
-    .step(0.1)
-    .name('rotation')
-
-bodyGroup.add(arm1, arm2)
-
-const leg1 = new THREE.Mesh(
-    new THREE.BoxGeometry(4, 10, 2.5),
-    new THREE.MeshPhongMaterial({ color: 0xff0000 }),
-)
-
-leg1.position.y += 15
-leg1.position.x -= 3
-
-const leg1Folder = bodyFolder.addFolder('Leg 1')
-
-leg1Folder.add(leg1.position, 'x').min(-20).max(20).step(0.1)
-leg1Folder.add(leg1.position, 'y').min(-50).max(50).step(0.1)
-
-const leg2 = new THREE.Mesh(
-    new THREE.BoxGeometry(4, 10, 2.5),
-    new THREE.MeshPhongMaterial({ color: 0xff0000 }),
-)
-
-leg2.position.y += 15
-leg2.position.x += 3
-
-const leg2Folder = bodyFolder.addFolder('Leg 2')
-
-leg2Folder.add(leg2.position, 'x').min(-20).max(20).step(0.1)
-leg2Folder.add(leg2.position, 'y').min(-50).max(50).step(0.1)
-
-bodyGroup.add(leg1, leg2)
-
-scene.add(bodyGroup)
-
-const bodyGroupFolder = bodyFolder.addFolder('Whole body')
-
-bodyGroupFolder.add(bodyGroup.position, 'x').min(-20).max(20).step(0.1)
-bodyGroupFolder.add(bodyGroup.position, 'z').min(-20).max(20).step(0.1)
-
-bodyGroupFolder.add(bodyGroup.position, 'y').min(-20).max(20).step(0.1)
-
-bodyGroup.position.y -= 10
+// const keyboardBaseGeometry =
+// const keyboardBase = new THREE.Mesh(keyboardBaseGeometry, laptopBaseMaterial);
+// keyboardBase.position.set(0, -1, -keyboardOffsetZ);
+// laptopBase.add(keyboardBase);
 
 /**
  * Lights
@@ -253,7 +240,6 @@ const renderer = new THREE.WebGLRenderer({
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-renderer.outputColorSpace = THREE.SRGBColorSpace
 
 renderer.render(scene, camera)
 
@@ -270,42 +256,6 @@ const clock = new THREE.Clock()
 const tick = () => {
     const elapsedTime = clock.getElapsedTime()
     controls.update()
-
-    const speed = 4
-
-    const boundary =
-        plane.geometry.parameters.width / 2 - cube.geometry.parameters.width / 2
-
-    if (navigationKeys.ArrowUp) {
-        // cube.position.z -= speed
-        bodyGroup.position.z -= speed
-        bodyGroup.rotation.y -= speed
-    }
-    if (navigationKeys.ArrowDown) {
-        // cube.position.z += speed
-        bodyGroup.position.z += speed
-        bodyGroup.rotation.y += speed
-    }
-    if (navigationKeys.ArrowLeft) {
-        // bodyGroup.position.x -= speed
-        bodyGroup.position.x -= speed
-        bodyGroup.rotation.y -= speed
-    }
-    if (navigationKeys.ArrowRight) {
-        // cube.position.x += speed
-        bodyGroup.position.x += speed
-        bodyGroup.rotation.y += speed
-    }
-
-    if (
-        boundary < bodyGroup.position.x ||
-        -boundary > bodyGroup.position.x ||
-        boundary < bodyGroup.position.z ||
-        -boundary > bodyGroup.position.z ||
-        bodyGroup.position.y < -10
-    ) {
-        bodyGroup.position.y -= 5
-    }
     renderer.render(scene, camera)
     requestAnimationFrame(tick)
 }
