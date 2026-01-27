@@ -106,6 +106,10 @@ torusKnotFolder.add(sphere.material, 'roughness').min(0).max(1).step(0.001)
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
 scene.add(ambientLight)
 
+const ambientLightFolder = gui.addFolder('Ambient light')
+
+ambientLightFolder.add(ambientLight, 'intensity').min(0).max(10).step(0.0001)
+
 const rectLight = new THREE.RectAreaLight(0xffffff, 3, 50, 50)
 
 rectLight.lookAt(0, -40, 0)
@@ -124,6 +128,10 @@ rectLight.add(rectLightMesh)
 
 const rectLightFolder = gui.addFolder('Rect light')
 
+const params = {
+    rotationEnabled: true,
+}
+
 const updateRectLightMesh = () => {
     rectLightMesh.geometry.dispose()
     rectLightMesh.geometry = new THREE.PlaneGeometry(
@@ -134,6 +142,7 @@ const updateRectLightMesh = () => {
     rectLightMesh.material.color.copy(rectLight.color)
 }
 
+rectLightFolder.add(params, 'rotationEnabled')
 rectLightFolder.addColor(rectLight, 'color').onChange(updateRectLightMesh)
 rectLightFolder
     .add(rectLight, 'width')
@@ -147,6 +156,7 @@ rectLightFolder
     .max(1000)
     .step(0.0001)
     .onChange(updateRectLightMesh)
+rectLightFolder.add(rectLight, 'intensity').min(0).max(10).step(0.0001)
 
 /**
  * Renderer
@@ -169,14 +179,17 @@ const controls = new OrbitControls(camera, renderer.domElement)
  * Tick
  */
 const clock = new THREE.Clock()
+const elapsedTime = clock.getElapsedTime()
+let delta = elapsedTime
 
 const tick = () => {
-    const elapsedTime = clock.getElapsedTime()
+    if (params.rotationEnabled) {
+        rectLight.position.x = Math.cos(delta * 1) * 100
+        rectLight.position.z = Math.sin(delta * 1) * 100
 
-    rectLight.position.x = Math.cos(elapsedTime * 1) * 100
-    rectLight.position.z = Math.sin(elapsedTime * 1) * 100
-
-    rectLight.lookAt(0, -40, 0)
+        rectLight.lookAt(0, -40, 0)
+        delta += 0.02
+    }
 
     controls.update()
     renderer.render(scene, camera)
