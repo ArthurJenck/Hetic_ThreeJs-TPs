@@ -1,6 +1,6 @@
+import { GUI } from 'lil-gui'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { GUI } from 'lil-gui'
 
 /**
  * GUI
@@ -67,27 +67,32 @@ groundNormalTexture.wrapT = THREE.RepeatWrapping
 //     '/wall/castle_brick_02_white_1k/nor_gl.jpg',
 // )
 
-const wallArmTexture = textureLoader.load('/wall/rusty_metal_grid_1k/arm.jpg')
+// const wallArmTexture = textureLoader.load('/wall/rusty_metal_grid_1k/arm.jpg')
+// const wallColorTexture = textureLoader.load(
+//     '/wall/rusty_metal_grid_1k/diff.jpg',
+// )
+// const wallNormalTexture = textureLoader.load(
+//     '/wall/rusty_metal_grid_1k/nor_gl.jpg',
+// )
+
 const wallColorTexture = textureLoader.load(
-    '/wall/rusty_metal_grid_1k/diff.jpg',
+    '/wall/scaffolding_grid_1k/diff.png',
 )
-const wallNormalTexture = textureLoader.load(
-    '/wall/rusty_metal_grid_1k/nor_gl.jpg',
-)
+wallColorTexture.colorSpace = THREE.SRGBColorSpace
 
-wallArmTexture.colorSpace = THREE.SRGBColorSpace
+// wallArmTexture.colorSpace = THREE.SRGBColorSpace
 
-wallArmTexture.repeat.set(4, 4)
+// wallArmTexture.repeat.set(4, 4)
 wallColorTexture.repeat.set(4, 4)
-wallNormalTexture.repeat.set(4, 4)
+// wallNormalTexture.repeat.set(4, 4)
 
-wallArmTexture.wrapS = THREE.RepeatWrapping
+// wallArmTexture.wrapS = THREE.RepeatWrapping
 wallColorTexture.wrapS = THREE.RepeatWrapping
-wallNormalTexture.wrapS = THREE.RepeatWrapping
+// wallNormalTexture.wrapS = THREE.RepeatWrapping
 
-wallArmTexture.wrapT = THREE.RepeatWrapping
+// wallArmTexture.wrapT = THREE.RepeatWrapping
 wallColorTexture.wrapT = THREE.RepeatWrapping
-wallNormalTexture.wrapT = THREE.RepeatWrapping
+// wallNormalTexture.wrapT = THREE.RepeatWrapping
 
 /**
  * Axes helper
@@ -132,17 +137,20 @@ plane.position.y -= 50
 scene.add(plane)
 
 const wall = new THREE.Mesh(
-    new THREE.BoxGeometry(600, 400, 10),
+    new THREE.BoxGeometry(200, 200, 50),
     new THREE.MeshPhysicalMaterial({
         map: wallColorTexture,
-        aoMap: wallArmTexture,
-        metalnessMap: wallArmTexture,
-        roughnessMap: wallArmTexture,
-        normalMap: wallNormalTexture,
-        transmission: 1,
-        roughness: 0.5,
+        // aoMap: wallArmTexture,
+        // metalnessMap: wallArmTexture,
+        // roughnessMap: wallArmTexture,
+        // normalMap: wallNormalTexture,
+        alphaTest: 0.5,
+        // transmission: 1,
+        // roughness: 0.5,
+        side: THREE.DoubleSide,
     }),
 )
+wall.position.y += 50
 
 scene.add(wall)
 
