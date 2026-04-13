@@ -1,12 +1,44 @@
 import { GUI } from 'lil-gui'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 
 /**
  * GUI
  */
 const gui = new GUI({
     // closeFolders: true,
+})
+
+/**
+ * Loaders
+ */
+const glbLoader = new GLTFLoader()
+glbLoader.load('/models/cup/mug.glb', (glb) => {
+    glb.scene.children.forEach((child) => {
+        child.castShadow = true
+    })
+
+    gui.addColor(glb.scene.children[0].material, 'color').onChange(
+        (newColor) => {
+            glb.scene.traverse((child) => {
+                if (child.isMesh) {
+                    child.material.color = newColor
+                }
+            })
+        },
+    )
+
+    gui.add(glb.scene.scale, 'x')
+        .name('scale')
+        .min(0.5)
+        .max(10)
+        .step(0.001)
+        .onChange((newScale) => {
+            glb.scene.scale.setScalar(newScale)
+        })
+
+    scene.add(glb.scene)
 })
 
 /**
@@ -39,7 +71,7 @@ const camera = new THREE.PerspectiveCamera(
     1550,
 )
 
-camera.position.set(125, 100, 125)
+camera.position.set(10, 10, 10)
 camera.lookAt(0, 0, 0)
 
 scene.add(camera)
@@ -48,43 +80,16 @@ scene.add(camera)
  * Objects
  */
 const plane = new THREE.Mesh(
-    new THREE.PlaneGeometry(1000, 1000),
+    new THREE.PlaneGeometry(500, 500),
     new THREE.MeshStandardMaterial({ color: 0xadadad }),
 )
 
 plane.rotation.x += -Math.PI / 2
-plane.position.y -= 50
+plane.position.y = 0.2
 
 plane.receiveShadow = true
 
 scene.add(plane)
-
-const cylinderMaterial = new THREE.MeshStandardMaterial({ color: 0x4287f5 })
-const cylinderGroup = new THREE.Group()
-
-for (let i = 0; i < 5; i++) {
-    for (let j = 0; j < 5; j++) {
-        const cylinderMesh = new THREE.Mesh(
-            new THREE.CylinderGeometry(20, 20, (j + i) * 20 + 20),
-            cylinderMaterial,
-        )
-
-        cylinderMesh.position.y += cylinderMesh.geometry.parameters.height / 2
-        cylinderMesh.position.x = i * 60
-        cylinderMesh.position.z = j * 60
-
-        cylinderMesh.castShadow = true
-        cylinderMesh.receiveShadow = true
-
-        cylinderGroup.add(cylinderMesh)
-    }
-}
-
-cylinderGroup.position.y -= 50
-cylinderGroup.position.x -= 120
-cylinderGroup.position.z -= 120
-
-scene.add(cylinderGroup)
 
 /**
  * Lights
@@ -93,17 +98,17 @@ const ambientLight = new THREE.AmbientLight(0xffffff, 3)
 scene.add(ambientLight)
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 3)
-directionalLight.position.set(-220, 200, -220)
+directionalLight.position.set(-10, 10, -10)
 directionalLight.castShadow = true
 
-directionalLight.shadow.mapSize.width = 2048
-directionalLight.shadow.mapSize.height = 2048
-directionalLight.shadow.camera.top = 250
-directionalLight.shadow.camera.right = 200
-directionalLight.shadow.camera.bottom = -200
-directionalLight.shadow.camera.left = -200
-directionalLight.shadow.camera.near = 10
-directionalLight.shadow.camera.far = 1000
+directionalLight.shadow.mapSize.width = 1048
+directionalLight.shadow.mapSize.height = 1048
+directionalLight.shadow.camera.top = 8
+directionalLight.shadow.camera.right = 8
+directionalLight.shadow.camera.bottom = -8
+directionalLight.shadow.camera.left = -8
+directionalLight.shadow.camera.near = 1
+directionalLight.shadow.camera.far = 25
 
 scene.add(directionalLight)
 
@@ -141,14 +146,10 @@ const controls = new OrbitControls(camera, renderer.domElement)
 /**
  * Tick
  */
-const clock = new THREE.Clock()
+// const clock = new THREE.Clock()
 
 const tick = () => {
-    const elapsedTime = clock.getElapsedTime()
-
-    directionalLight.position.x = Math.sin(elapsedTime * 0.4) * 200
-    directionalLight.position.z = -Math.cos(elapsedTime * 0.4) * 200
-
+    // const elapsedTime = clock.getElapsedTime()
     controls.update()
     renderer.render(scene, camera)
     requestAnimationFrame(tick)
