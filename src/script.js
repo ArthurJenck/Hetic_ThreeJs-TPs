@@ -22,79 +22,6 @@ const sizes = {
 }
 
 /**
- * Textures
- */
-const textureLoader = new THREE.TextureLoader()
-
-// const groundArmTexture = textureLoader.load('/ground/brown_mud_dry_1k/arm.jpg')
-// const groundColorTexture = textureLoader.load(
-//     '/ground/brown_mud_dry_1k/diff.jpg',
-// )
-// const groundNormalTexture = textureLoader.load(
-//     '/ground/brown_mud_dry_1k/nor_gl.jpg',
-// )
-const groundArmTexture = textureLoader.load(
-    '/ground/rock_embedded_floor_1k/arm.jpg',
-)
-const groundColorTexture = textureLoader.load(
-    '/ground/rock_embedded_floor_1k/diff.jpg',
-)
-const groundNormalTexture = textureLoader.load(
-    '/ground/rock_embedded_floor_1k/nor_gl.jpg',
-)
-
-groundColorTexture.colorSpace = THREE.SRGBColorSpace
-
-groundColorTexture.repeat.set(8, 8)
-groundArmTexture.repeat.set(8, 8)
-groundNormalTexture.repeat.set(8, 8)
-
-groundColorTexture.wrapS = THREE.RepeatWrapping
-groundArmTexture.wrapS = THREE.RepeatWrapping
-groundNormalTexture.wrapS = THREE.RepeatWrapping
-
-groundColorTexture.wrapT = THREE.RepeatWrapping
-groundArmTexture.wrapT = THREE.RepeatWrapping
-groundNormalTexture.wrapT = THREE.RepeatWrapping
-
-// const wallArmTexture = textureLoader.load(
-//     '/wall/castle_brick_02_white_1k/arm.jpg',
-// )
-// const wallColorTexture = textureLoader.load(
-//     '/wall/castle_brick_02_white_1k/diff.jpg',
-// )
-// const wallNormalTexture = textureLoader.load(
-//     '/wall/castle_brick_02_white_1k/nor_gl.jpg',
-// )
-
-// const wallArmTexture = textureLoader.load('/wall/rusty_metal_grid_1k/arm.jpg')
-// const wallColorTexture = textureLoader.load(
-//     '/wall/rusty_metal_grid_1k/diff.jpg',
-// )
-// const wallNormalTexture = textureLoader.load(
-//     '/wall/rusty_metal_grid_1k/nor_gl.jpg',
-// )
-
-const wallColorTexture = textureLoader.load(
-    '/wall/scaffolding_grid_1k/diff.png',
-)
-wallColorTexture.colorSpace = THREE.SRGBColorSpace
-
-// wallArmTexture.colorSpace = THREE.SRGBColorSpace
-
-// wallArmTexture.repeat.set(4, 4)
-wallColorTexture.repeat.set(4, 4)
-// wallNormalTexture.repeat.set(4, 4)
-
-// wallArmTexture.wrapS = THREE.RepeatWrapping
-wallColorTexture.wrapS = THREE.RepeatWrapping
-// wallNormalTexture.wrapS = THREE.RepeatWrapping
-
-// wallArmTexture.wrapT = THREE.RepeatWrapping
-wallColorTexture.wrapT = THREE.RepeatWrapping
-// wallNormalTexture.wrapT = THREE.RepeatWrapping
-
-/**
  * Axes helper
  */
 const axesHelper = new THREE.AxesHelper(sizes.width, sizes.height)
@@ -122,37 +49,42 @@ scene.add(camera)
  */
 const plane = new THREE.Mesh(
     new THREE.PlaneGeometry(1000, 1000),
-    new THREE.MeshStandardMaterial({
-        map: groundColorTexture,
-        aoMap: groundArmTexture,
-        metalnessMap: groundArmTexture,
-        roughnessMap: groundArmTexture,
-        normalMap: groundNormalTexture,
-    }),
+    new THREE.MeshStandardMaterial({ color: 0xadadad }),
 )
 
 plane.rotation.x += -Math.PI / 2
 plane.position.y -= 50
 
+plane.receiveShadow = true
+
 scene.add(plane)
 
-const wall = new THREE.Mesh(
-    new THREE.BoxGeometry(200, 200, 50),
-    new THREE.MeshPhysicalMaterial({
-        map: wallColorTexture,
-        // aoMap: wallArmTexture,
-        // metalnessMap: wallArmTexture,
-        // roughnessMap: wallArmTexture,
-        // normalMap: wallNormalTexture,
-        alphaTest: 0.5,
-        // transmission: 1,
-        // roughness: 0.5,
-        side: THREE.DoubleSide,
-    }),
-)
-wall.position.y += 50
+const cylinderMaterial = new THREE.MeshStandardMaterial({ color: 0x4287f5 })
+const cylinderGroup = new THREE.Group()
 
-scene.add(wall)
+for (let i = 0; i < 5; i++) {
+    for (let j = 0; j < 5; j++) {
+        const cylinderMesh = new THREE.Mesh(
+            new THREE.CylinderGeometry(20, 20, (j + i) * 20 + 20),
+            cylinderMaterial,
+        )
+
+        cylinderMesh.position.y += cylinderMesh.geometry.parameters.height / 2
+        cylinderMesh.position.x = i * 60
+        cylinderMesh.position.z = j * 60
+
+        cylinderMesh.castShadow = true
+        cylinderMesh.receiveShadow = true
+
+        cylinderGroup.add(cylinderMesh)
+    }
+}
+
+cylinderGroup.position.y -= 50
+cylinderGroup.position.x -= 120
+cylinderGroup.position.z -= 120
+
+scene.add(cylinderGroup)
 
 /**
  * Lights
@@ -161,8 +93,31 @@ const ambientLight = new THREE.AmbientLight(0xffffff, 3)
 scene.add(ambientLight)
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 3)
-directionalLight.position.set(5, 5, 10)
+directionalLight.position.set(-220, 200, -220)
+directionalLight.castShadow = true
+
+directionalLight.shadow.mapSize.width = 2048
+directionalLight.shadow.mapSize.height = 2048
+directionalLight.shadow.camera.top = 250
+directionalLight.shadow.camera.right = 200
+directionalLight.shadow.camera.bottom = -200
+directionalLight.shadow.camera.left = -200
+directionalLight.shadow.camera.near = 10
+directionalLight.shadow.camera.far = 1000
+
 scene.add(directionalLight)
+
+const directionalLightHelper = new THREE.DirectionalLightHelper(
+    directionalLight,
+)
+
+scene.add(directionalLightHelper)
+
+const directionalLightCameraHelper = new THREE.CameraHelper(
+    directionalLight.shadow.camera,
+)
+
+scene.add(directionalLightCameraHelper)
 
 /**
  * Renderer
@@ -173,6 +128,8 @@ const renderer = new THREE.WebGLRenderer({
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.shadowMap.enabled = true
+renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
 renderer.render(scene, camera)
 
@@ -187,7 +144,11 @@ const controls = new OrbitControls(camera, renderer.domElement)
 const clock = new THREE.Clock()
 
 const tick = () => {
-    // const elapsedTime = clock.getElapsedTime()
+    const elapsedTime = clock.getElapsedTime()
+
+    directionalLight.position.x = Math.sin(elapsedTime * 0.4) * 200
+    directionalLight.position.z = -Math.cos(elapsedTime * 0.4) * 200
+
     controls.update()
     renderer.render(scene, camera)
     requestAnimationFrame(tick)
