@@ -67,10 +67,12 @@ groundNormalTexture.wrapT = THREE.RepeatWrapping
 //     '/wall/castle_brick_02_white_1k/nor_gl.jpg',
 // )
 
-const wallArmTexture = textureLoader.load('/wall/floor_bricks_02_1k/arm.jpg')
-const wallColorTexture = textureLoader.load('/wall/floor_bricks_02_1k/diff.jpg')
+const wallArmTexture = textureLoader.load('/wall/rusty_metal_grid_1k/arm.jpg')
+const wallColorTexture = textureLoader.load(
+    '/wall/rusty_metal_grid_1k/diff.jpg',
+)
 const wallNormalTexture = textureLoader.load(
-    '/wall/floor_bricks_02_1k/nor_gl.jpg',
+    '/wall/rusty_metal_grid_1k/nor_gl.jpg',
 )
 
 wallArmTexture.colorSpace = THREE.SRGBColorSpace
@@ -130,13 +132,15 @@ plane.position.y -= 50
 scene.add(plane)
 
 const wall = new THREE.Mesh(
-    new THREE.BoxGeometry(300, 200, 10),
-    new THREE.MeshStandardMaterial({
+    new THREE.BoxGeometry(600, 400, 10),
+    new THREE.MeshPhysicalMaterial({
         map: wallColorTexture,
         aoMap: wallArmTexture,
         metalnessMap: wallArmTexture,
         roughnessMap: wallArmTexture,
         normalMap: wallNormalTexture,
+        transmission: 1,
+        roughness: 0.5,
     }),
 )
 
@@ -147,6 +151,10 @@ scene.add(wall)
  */
 const ambientLight = new THREE.AmbientLight(0xffffff, 3)
 scene.add(ambientLight)
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 3)
+directionalLight.position.set(5, 5, 10)
+scene.add(directionalLight)
 
 /**
  * Renderer
@@ -171,7 +179,7 @@ const controls = new OrbitControls(camera, renderer.domElement)
 const clock = new THREE.Clock()
 
 const tick = () => {
-    const elapsedTime = clock.getElapsedTime()
+    // const elapsedTime = clock.getElapsedTime()
     controls.update()
     renderer.render(scene, camera)
     requestAnimationFrame(tick)
