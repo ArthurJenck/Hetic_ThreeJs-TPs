@@ -11,65 +11,6 @@ const gui = new GUI({
 })
 
 /**
- * Loaders
- */
-const glbLoader = new GLTFLoader()
-let soldier = null
-let currentAction = null
-let controlMode = 'none'
-const animations = {}
-
-const WALK_SPEED = 8
-const RUN_SPEED = 20
-
-const keysPressed = {}
-window.addEventListener('keydown', (e) => {
-    keysPressed[e.code] = true
-})
-window.addEventListener('keyup', (e) => {
-    keysPressed[e.code] = false
-})
-
-function switchAnimation(name) {
-    const target = animations[name]
-    if (!target || (currentAction && currentAction.getClip().name === name))
-        return
-    if (currentAction) currentAction.fadeOut(0.2)
-    currentAction = target
-    currentAction.reset().fadeIn(0.2).play()
-}
-
-function getMovementSpeed(animName) {
-    if (animName === 'Run') return RUN_SPEED
-    if (animName === 'Walk') return WALK_SPEED
-    return 0
-}
-
-glbLoader.load('/models/soldier/soldier.glb', (glb) => {
-    glb.scene.traverse((child) => (child.castShadow = true))
-    glb.scene.scale.setScalar(4)
-    glb.scene.position.y += 0.2
-
-    mixer = new THREE.AnimationMixer(glb.scene)
-
-    const guiActions = {}
-    glb.animations.forEach((clip) => {
-        animations[clip.name] = mixer.clipAction(clip)
-        guiActions[clip.name] = () => {
-            controlMode = 'gui'
-            switchAnimation(clip.name)
-        }
-        gui.add(guiActions, clip.name)
-    })
-
-    currentAction = animations['Idle'] || animations[glb.animations[0].name]
-    currentAction.play()
-
-    soldier = glb.scene
-    scene.add(soldier)
-})
-
-/**
  * Canvas
  */
 const canvas = document.querySelector('canvas.webgl')
@@ -119,6 +60,33 @@ plane.receiveShadow = true
 
 scene.add(plane)
 
+const cubeGeometry = new THREE.BoxGeometry(2, 2, 2)
+const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff })
+let currentIntersect = null
+const objectsToTest = []
+
+for (let i = 0; i < 5; i++) {
+    for (let j = 0; j < 5; j++) {
+        const cubeMesh = new THREE.Mesh(cubeGeometry, cubeMaterial)
+        cubeMesh.position.set(j * 3, 1.2, i * 3)
+
+        objectsToTest.push(cubeMesh)
+
+        scene.add(cubeMesh)
+    }
+}
+
+const mouse = new THREE.Vector2(-1, 1)
+
+window.addEventListener('mousemove', (e) => {
+    mouse.x = (e.clientX / sizes.width) * 2 - 1
+    mouse.y = -((e.clientY / sizes.height) * 2 - 1)
+})
+
+window.addEventListener('click', () => {
+    scene.remove(currentIntersect.object)
+})
+
 /**
  * Lights
  */
@@ -140,17 +108,17 @@ directionalLight.shadow.camera.far = 200
 
 scene.add(directionalLight)
 
-const directionalLightHelper = new THREE.DirectionalLightHelper(
-    directionalLight,
-)
+// const directionalLightHelper = new THREE.DirectionalLightHelper(
+//     directionalLight,
+// )
 
-scene.add(directionalLightHelper)
+// scene.add(directionalLightHelper)
 
-const directionalLightCameraHelper = new THREE.CameraHelper(
-    directionalLight.shadow.camera,
-)
+// const directionalLightCameraHelper = new THREE.CameraHelper(
+//     directionalLight.shadow.camera,
+// )
 
-scene.add(directionalLightCameraHelper)
+// scene.add(directionalLightCameraHelper)
 
 /**
  * Renderer
@@ -172,61 +140,22 @@ renderer.render(scene, camera)
 const controls = new OrbitControls(camera, renderer.domElement)
 
 /**
+ * Raycaster
+ */
+const raycaster = new THREE.Raycaster()
+
+/**
  * Tick
  */
 const clock = new THREE.Clock()
-let mixer = null
 
 const tick = () => {
     const delta = clock.getDelta()
-    if (mixer) {
-        mixer.update(delta)
-    }
 
-    if (soldier) {
-        const forward = keysPressed['KeyS'] || keysPressed['ArrowDown']
-        const backward = keysPressed['KeyW'] || keysPressed['ArrowUp']
-        const left = keysPressed['KeyA'] || keysPressed['ArrowLeft']
-        const right = keysPressed['KeyD'] || keysPressed['ArrowRight']
-        const shift = keysPressed['ShiftLeft'] || keysPressed['ShiftRight']
-        const keyT = keysPressed['KeyT']
-        const isMoving = forward || backward || left || right
+    raycaster.setFromCamera(mouse, camera)
 
-        if (isMoving) {
-            controlMode = 'keyboard'
-            const animName = shift ? 'Run' : 'Walk'
-            switchAnimation(animName)
-
-            const targetAngle =
-                Math.atan2(
-                    (right ? 1 : 0) - (left ? 1 : 0),
-                    (forward ? 1 : 0) - (backward ? 1 : 0),
-                ) + Math.PI
-
-            let diff = targetAngle - soldier.rotation.y
-            while (diff > Math.PI) diff -= Math.PI * 2
-            while (diff < -Math.PI) diff += Math.PI * 2
-            soldier.rotation.y += diff * Math.min(1, 10 * delta)
-
-            const speed = getMovementSpeed(animName) * delta
-            const moveAngle = soldier.rotation.y - Math.PI
-            soldier.position.x += Math.sin(moveAngle) * speed
-            soldier.position.z += Math.cos(moveAngle) * speed
-        } else if (controlMode !== 'gui') {
-            controlMode = 'none'
-            switchAnimation(keyT ? 'TPose' : 'Idle')
-        }
-
-        if (controlMode === 'gui' && currentAction) {
-            const speed = getMovementSpeed(currentAction.getClip().name) * delta
-            if (speed > 0) {
-                soldier.position.x +=
-                    Math.sin(soldier.rotation.y - Math.PI) * speed
-                soldier.position.z +=
-                    Math.cos(soldier.rotation.y - Math.PI) * speed
-            }
-        }
-    }
+    const intersects = raycaster.intersectObjects(objectsToTest)
+    currentIntersect = intersects[0]
 
     controls.update()
     renderer.render(scene, camera)
