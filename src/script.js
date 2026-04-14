@@ -1,7 +1,7 @@
 import { GUI } from 'lil-gui'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { DecalGeometry } from 'three/addons/geometries/DecalGeometry.js'
 
 /**
  * GUI
@@ -21,6 +21,13 @@ const sizes = {
     width: window.innerWidth,
     height: window.innerHeight,
 }
+
+/**
+ * Loaders
+ */
+const textureLoader = new THREE.TextureLoader()
+const stainDiffuse = textureLoader.load('/decal/diff.png')
+const stainNormal = textureLoader.load('/decal/normal.png')
 
 /**
  * Axes helper
@@ -60,22 +67,23 @@ plane.receiveShadow = true
 
 scene.add(plane)
 
-const cubeGeometry = new THREE.BoxGeometry(2, 2, 2)
-const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff })
-let currentIntersect = null
-const objectsToTest = []
+const wall = new THREE.Mesh(
+    new THREE.BoxGeometry(15, 7, 0.5),
+    new THREE.MeshStandardMaterial({ color: 0xff0000 }),
+)
+wall.position.y += wall.geometry.parameters.height / 2 + 0.2
+wall.rotation.y += 0.7
 
-for (let i = 0; i < 5; i++) {
-    for (let j = 0; j < 5; j++) {
-        const cubeMesh = new THREE.Mesh(cubeGeometry, cubeMaterial)
-        cubeMesh.position.set(j * 3, 1.2, i * 3)
+scene.add(wall)
 
-        objectsToTest.push(cubeMesh)
+/**
+ * Raycaster
+ */
+const raycaster = new THREE.Raycaster()
 
-        scene.add(cubeMesh)
-    }
-}
-
+/**
+ * Mouse
+ */
 const mouse = new THREE.Vector2(-1, 1)
 
 window.addEventListener('mousemove', (e) => {
@@ -83,8 +91,40 @@ window.addEventListener('mousemove', (e) => {
     mouse.y = -((e.clientY / sizes.height) * 2 - 1)
 })
 
+let decalCount = 0
+
 window.addEventListener('click', () => {
-    scene.remove(currentIntersect.object)
+    raycaster.setFromCamera(mouse, camera)
+    const intersects = raycaster.intersectObject(wall)
+    if (intersects.length === 0) return
+
+    const hit = intersects[0]
+    const position = hit.point.clone()
+    const orientation = new THREE.Euler()
+    orientation.copy(wall.rotation)
+
+    const rand = Math.random() + 0.1
+    const size = new THREE.Vector3(rand, rand, 2)
+
+    const randomColor =
+        '#' + (0x1000000 + Math.random() * 0xffffff).toString(16).substr(1, 6)
+
+    const stain = new THREE.Mesh(
+        new DecalGeometry(wall, position, orientation, size),
+        new THREE.MeshStandardMaterial({
+            color: randomColor,
+            normalMap: stainNormal,
+            map: stainDiffuse,
+            transparent: true,
+            polygonOffset: true,
+            polygonOffsetFactor: -1,
+            polygonOffsetUnits: -1,
+            depthWrite: false,
+        }),
+    )
+
+    stain.renderOrder = decalCount++
+    scene.add(stain)
 })
 
 /**
@@ -140,22 +180,12 @@ renderer.render(scene, camera)
 const controls = new OrbitControls(camera, renderer.domElement)
 
 /**
- * Raycaster
- */
-const raycaster = new THREE.Raycaster()
-
-/**
  * Tick
  */
 const clock = new THREE.Clock()
 
 const tick = () => {
     const delta = clock.getDelta()
-
-    raycaster.setFromCamera(mouse, camera)
-
-    const intersects = raycaster.intersectObjects(objectsToTest)
-    currentIntersect = intersects[0]
 
     controls.update()
     renderer.render(scene, camera)
