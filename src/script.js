@@ -1,7 +1,7 @@
 import { GUI } from 'lil-gui'
+import Stats from 'stats.js'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import Stats from 'stats.js'
 
 /**
  * GUI
@@ -15,6 +15,13 @@ const gui = new GUI({
  */
 const stats = Stats()
 document.body.appendChild(stats.dom)
+
+/**
+ * Textures
+ */
+
+const textureLoader = new THREE.TextureLoader()
+const snowflakeTexture = textureLoader.load('/snowflake/snowflake.jpg')
 
 /**
  * Canvas
@@ -43,7 +50,7 @@ const camera = new THREE.PerspectiveCamera(
     60,
     sizes.width / sizes.height,
     0.1,
-    1550,
+    155,
 )
 
 camera.position.set(10, 10, 10)
@@ -64,36 +71,61 @@ plane.position.y = 0.2
 
 plane.receiveShadow = true
 
-scene.add(plane)
+// scene.add(plane)
 
-const count = 50000
-const meshMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 })
-const cubeGeometry = new THREE.BoxGeometry(1, 1, 1)
-
-// for (let i = 0; i < count; i++) {
-//     const mesh = new THREE.Mesh(cubeGeometry, meshMaterial)
-//     mesh.position.set(
-//         (Math.random() - 0.5) * 500,
-//         Math.random() * 100,
-//         (Math.random() - 0.5) * 500,
-//     )
-//     scene.add(mesh)
-// }
-
-const instancedMesh = new THREE.InstancedMesh(cubeGeometry, meshMaterial, count)
-const dummy = new THREE.Object3D()
-
-for (let i = 0; i < count; i++) {
-    dummy.position.set(
-        (Math.random() - 0.5) * 500,
-        Math.random() * 100,
-        (Math.random() - 0.5) * 500,
-    )
-    dummy.updateMatrix()
-    instancedMesh.setMatrixAt(i, dummy.matrix)
+const obj = {
+    count: 1000,
 }
 
-scene.add(instancedMesh)
+const particlesMaterial = new THREE.PointsMaterial({
+    size: 0.2,
+    sizeAttenuation: true,
+    map: snowflakeTexture,
+    transparent: true,
+    alphaMap: snowflakeTexture,
+    alphaTest: 0.01,
+    depthWrite: false,
+})
+
+let particlesGeometry = null
+let particlesMesh = null
+let velocities = null
+let phases = null
+let amplitudes = null
+
+const createParticles = (count) => {
+    if (particlesMesh) scene.remove(particlesMesh)
+    if (particlesGeometry) particlesGeometry.dispose()
+
+    particlesGeometry = new THREE.BufferGeometry()
+
+    const positions = new Float32Array(count * 3)
+    for (let i = 0; i < count * 3; i++) {
+        positions[i] = (Math.random() - 0.5) * 20
+    }
+
+    particlesGeometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(positions, 3),
+    )
+
+    velocities = new Float32Array(count)
+    phases = new Float32Array(count)
+    amplitudes = new Float32Array(count)
+
+    for (let i = 0; i < count; i++) {
+        velocities[i] = 0.5 + Math.random()
+        phases[i] = Math.random() * Math.PI * 2
+        amplitudes[i] = 0.5 + Math.random()
+    }
+
+    particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial)
+    scene.add(particlesMesh)
+}
+
+createParticles(obj.count)
+
+gui.add(obj, 'count').min(1).max(10000).step(1).onChange(createParticles)
 
 /**
  * Lights
@@ -139,11 +171,30 @@ const controls = new OrbitControls(camera, renderer.domElement)
  * Tick
  */
 const clock = new THREE.Clock()
+let elapsedTime = 0
 
 const tick = () => {
     const delta = clock.getDelta()
+    elapsedTime += delta
 
-    stats.update()
+    const posArray = particlesGeometry.attributes.position.array
+
+    for (let i = 0; i < obj.count; i++) {
+        const i3 = i * 3
+
+        posArray[i3 + 1] -= velocities[i] * delta
+        posArray[i3] +=
+            Math.sin(elapsedTime * 0.5 + phases[i]) * amplitudes[i] * delta
+
+        if (posArray[i3 + 1] < -10) {
+            posArray[i3] = (Math.random() - 0.5) * 20
+            posArray[i3 + 1] = 10
+            posArray[i3 + 2] = (Math.random() - 0.5) * 20
+        }
+    }
+
+    particlesGeometry.attributes.position.needsUpdate = true
+
     controls.update()
     renderer.render(scene, camera)
     requestAnimationFrame(tick)
