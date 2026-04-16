@@ -75,6 +75,7 @@ plane.receiveShadow = true
 
 const obj = {
     count: 1000,
+    maxCount: 10000,
 }
 
 const particlesMaterial = new THREE.PointsMaterial({
@@ -93,39 +94,38 @@ let velocities = null
 let phases = null
 let amplitudes = null
 
-const createParticles = (count) => {
-    if (particlesMesh) scene.remove(particlesMesh)
-    if (particlesGeometry) particlesGeometry.dispose()
+particlesGeometry = new THREE.BufferGeometry()
 
-    particlesGeometry = new THREE.BufferGeometry()
-
-    const positions = new Float32Array(count * 3)
-    for (let i = 0; i < count * 3; i++) {
-        positions[i] = (Math.random() - 0.5) * 20
-    }
-
-    particlesGeometry.setAttribute(
-        'position',
-        new THREE.BufferAttribute(positions, 3),
-    )
-
-    velocities = new Float32Array(count)
-    phases = new Float32Array(count)
-    amplitudes = new Float32Array(count)
-
-    for (let i = 0; i < count; i++) {
-        velocities[i] = 0.5 + Math.random()
-        phases[i] = Math.random() * Math.PI * 2
-        amplitudes[i] = 0.5 + Math.random()
-    }
-
-    particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial)
-    scene.add(particlesMesh)
+const positions = new Float32Array(obj.maxCount * 3)
+for (let i = 0; i < obj.maxCount * 3; i++) {
+    positions[i] = (Math.random() - 0.5) * 20
 }
 
-createParticles(obj.count)
+particlesGeometry.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute(positions, 3),
+)
 
-gui.add(obj, 'count').min(1).max(10000).step(1).onChange(createParticles)
+velocities = new Float32Array(obj.maxCount)
+phases = new Float32Array(obj.maxCount)
+amplitudes = new Float32Array(obj.maxCount)
+
+for (let i = 0; i < obj.maxCount; i++) {
+    velocities[i] = 0.5 + Math.random()
+    phases[i] = Math.random() * Math.PI * 2
+    amplitudes[i] = 0.5 + Math.random()
+}
+
+particlesGeometry.setDrawRange(0, obj.count)
+
+particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial)
+scene.add(particlesMesh)
+
+gui.add(obj, 'count')
+    .min(1)
+    .max(obj.maxCount)
+    .step(1)
+    .onChange((newCount) => particlesGeometry.setDrawRange(0, obj.newCount))
 
 /**
  * Lights
@@ -186,7 +186,7 @@ const tick = () => {
         posArray[i3] +=
             Math.sin(elapsedTime * 0.5 + phases[i]) * amplitudes[i] * delta
 
-        if (posArray[i3 + 1] < -10) {
+        if (posArray[i3 + 1] < -2) {
             posArray[i3] = (Math.random() - 0.5) * 20
             posArray[i3 + 1] = 10
             posArray[i3 + 2] = (Math.random() - 0.5) * 20
@@ -195,6 +195,7 @@ const tick = () => {
 
     particlesGeometry.attributes.position.needsUpdate = true
 
+    stats.update()
     controls.update()
     renderer.render(scene, camera)
     requestAnimationFrame(tick)
