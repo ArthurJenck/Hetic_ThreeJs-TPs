@@ -2,6 +2,10 @@ import { GUI } from 'lil-gui'
 import Stats from 'stats.js'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 
 /**
  * GUI
@@ -84,7 +88,7 @@ const particlesMaterial = new THREE.PointsMaterial({
     map: snowflakeTexture,
     transparent: true,
     alphaMap: snowflakeTexture,
-    alphaTest: 0.01,
+    alphaTest: 0.1,
     depthWrite: false,
 })
 
@@ -125,7 +129,7 @@ gui.add(obj, 'count')
     .min(1)
     .max(obj.maxCount)
     .step(1)
-    .onChange((newCount) => particlesGeometry.setDrawRange(0, obj.newCount))
+    .onChange((newCount) => particlesGeometry.setDrawRange(0, newCount))
 
 /**
  * Lights
@@ -163,6 +167,27 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap
 renderer.render(scene, camera)
 
 /**
+ * Post-processing
+ */
+const composer = new EffectComposer(renderer)
+composer.setSize(sizes.width, sizes.height)
+composer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+const renderPass = new RenderPass(scene, camera)
+composer.addPass(renderPass)
+
+const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(sizes.width, sizes.height),
+    0.6,
+    0.1,
+    0.5,
+)
+composer.addPass(bloomPass)
+
+const outputPass = new OutputPass()
+composer.addPass(outputPass)
+
+/**
  * Controls
  */
 const controls = new OrbitControls(camera, renderer.domElement)
@@ -197,7 +222,7 @@ const tick = () => {
 
     stats.update()
     controls.update()
-    renderer.render(scene, camera)
+    composer.render()
     requestAnimationFrame(tick)
 }
 
