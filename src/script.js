@@ -1,11 +1,11 @@
 import { GUI } from 'lil-gui'
 import Stats from 'stats.js'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 
 /**
  * GUI
@@ -21,11 +21,49 @@ const stats = Stats()
 document.body.appendChild(stats.dom)
 
 /**
+ * Models
+ */
+let frameMesh = null
+
+const gltfLoader = new GLTFLoader()
+gltfLoader.load('/tp6/model.glb', (glb) => {
+    const buttonColors = {
+        button1: '#FFA0FF',
+        button2: '#75FFFD',
+        button3: '#FFFFFF',
+        button4: '#30FD3B',
+        button5: '#FF5555',
+    }
+
+    glb.scene.traverse((child) => {
+        if (!child.isMesh) return
+
+        if (child.name === 'frame') {
+            child.material.emissive.set(0xffffff)
+            frameMesh = child
+            console.log(child.geometry.getSize())
+
+            const rectAreaLight = new THREE.RectAreaLight(
+                0xffffff,
+                3,
+                child.geometry,
+            )
+        }
+
+        if (child.name in buttonColors) {
+            child.material.emissive.set(buttonColors[child.name])
+            child.material.emissiveIntensity = 2
+        }
+    })
+
+    scene.add(glb.scene)
+})
+
+/**
  * Textures
  */
 
 const textureLoader = new THREE.TextureLoader()
-const snowflakeTexture = textureLoader.load('/snowflake/snowflake.jpg')
 
 /**
  * Canvas
@@ -38,6 +76,20 @@ const sizes = {
     width: window.innerWidth,
     height: window.innerHeight,
 }
+
+window.addEventListener('resize', () => {
+    // Update sizes
+    sizes.width = window.innerWidth
+    sizes.height = window.innerHeight
+
+    // Update camera
+    camera.aspect = sizes.width / sizes.height
+    camera.updateProjectionMatrix()
+
+    // Update renderer
+    renderer.setSize(sizes.width, sizes.height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+})
 
 /**
  * Axes helper
@@ -57,8 +109,8 @@ const camera = new THREE.PerspectiveCamera(
     155,
 )
 
-camera.position.set(10, 10, 10)
-camera.lookAt(0, 0, 0)
+camera.position.set(10.2, 5.8, 9.2)
+camera.lookAt(2.5, 4.5, 0)
 
 scene.add(camera)
 
@@ -77,80 +129,11 @@ plane.receiveShadow = true
 
 // scene.add(plane)
 
-const obj = {
-    count: 1000,
-    maxCount: 10000,
-}
-
-const particlesMaterial = new THREE.PointsMaterial({
-    size: 0.2,
-    sizeAttenuation: true,
-    map: snowflakeTexture,
-    transparent: true,
-    alphaMap: snowflakeTexture,
-    alphaTest: 0.1,
-    depthWrite: false,
-})
-
-let particlesGeometry = null
-let particlesMesh = null
-let velocities = null
-let phases = null
-let amplitudes = null
-
-particlesGeometry = new THREE.BufferGeometry()
-
-const positions = new Float32Array(obj.maxCount * 3)
-for (let i = 0; i < obj.maxCount * 3; i++) {
-    positions[i] = (Math.random() - 0.5) * 20
-}
-
-particlesGeometry.setAttribute(
-    'position',
-    new THREE.Float32BufferAttribute(positions, 3),
-)
-
-velocities = new Float32Array(obj.maxCount)
-phases = new Float32Array(obj.maxCount)
-amplitudes = new Float32Array(obj.maxCount)
-
-for (let i = 0; i < obj.maxCount; i++) {
-    velocities[i] = 0.5 + Math.random()
-    phases[i] = Math.random() * Math.PI * 2
-    amplitudes[i] = 0.5 + Math.random()
-}
-
-particlesGeometry.setDrawRange(0, obj.count)
-
-particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial)
-scene.add(particlesMesh)
-
-gui.add(obj, 'count')
-    .min(1)
-    .max(obj.maxCount)
-    .step(1)
-    .onChange((newCount) => particlesGeometry.setDrawRange(0, newCount))
-
 /**
  * Lights
  */
-const ambientLight = new THREE.AmbientLight(0xffffff, 3)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.2)
 scene.add(ambientLight)
-
-const directionalLight = new THREE.DirectionalLight(0xffffff, 3)
-directionalLight.position.set(-20, 20, -20)
-directionalLight.castShadow = true
-
-directionalLight.shadow.mapSize.width = 2056
-directionalLight.shadow.mapSize.height = 2056
-directionalLight.shadow.camera.top = 15
-directionalLight.shadow.camera.right = 15
-directionalLight.shadow.camera.bottom = -15
-directionalLight.shadow.camera.left = -15
-directionalLight.shadow.camera.near = 1
-directionalLight.shadow.camera.far = 200
-
-scene.add(directionalLight)
 
 /**
  * Renderer
@@ -178,10 +161,15 @@ composer.addPass(renderPass)
 
 const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(sizes.width, sizes.height),
-    0.6,
-    0.1,
-    0.5,
+    0.15,
+    0,
+    0.9,
 )
+
+gui.add(bloomPass, 'strength').min(0).max(2).step(0.001)
+gui.add(bloomPass, 'radius').min(0).max(2).step(0.001)
+gui.add(bloomPass, 'threshold').min(0).max(2).step(0.0001)
+
 composer.addPass(bloomPass)
 
 const outputPass = new OutputPass()
@@ -190,38 +178,18 @@ composer.addPass(outputPass)
 /**
  * Controls
  */
-const controls = new OrbitControls(camera, renderer.domElement)
+// const controls = new OrbitControls(camera, renderer.domElement)
 
 /**
  * Tick
  */
 const clock = new THREE.Clock()
-let elapsedTime = 0
 
 const tick = () => {
     const delta = clock.getDelta()
-    elapsedTime += delta
-
-    const posArray = particlesGeometry.attributes.position.array
-
-    for (let i = 0; i < obj.count; i++) {
-        const i3 = i * 3
-
-        posArray[i3 + 1] -= velocities[i] * delta
-        posArray[i3] +=
-            Math.sin(elapsedTime * 0.5 + phases[i]) * amplitudes[i] * delta
-
-        if (posArray[i3 + 1] < -2) {
-            posArray[i3] = (Math.random() - 0.5) * 20
-            posArray[i3 + 1] = 10
-            posArray[i3 + 2] = (Math.random() - 0.5) * 20
-        }
-    }
-
-    particlesGeometry.attributes.position.needsUpdate = true
 
     stats.update()
-    controls.update()
+    // controls.update()
     composer.render()
     requestAnimationFrame(tick)
 }
