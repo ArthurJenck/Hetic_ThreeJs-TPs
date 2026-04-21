@@ -79,22 +79,10 @@ scene.add(camera)
 /**
  * Objects
  */
-const obj = {
-    brightness: 1,
-}
-
-gui.add(obj, 'brightness')
-    .min(0)
-    .max(10)
-    .step(0.01)
-    .onChange(
-        (newValue) => (planeMaterial.uniforms.uBrightness.value = newValue),
-    )
-
 const planeMaterial = new THREE.ShaderMaterial({
+    transparent: true,
     uniforms: {
-        uDiffuse: { value: diffuseTexture },
-        uBrightness: { value: obj.brightness },
+        iTime: { value: 0.0 },
     },
     vertexShader: `
     varying vec2 vUv;
@@ -106,17 +94,16 @@ const planeMaterial = new THREE.ShaderMaterial({
     `,
 
     fragmentShader: `
-    uniform sampler2D uDiffuse;
-    uniform float uBrightness;
     varying vec2 vUv;
+    uniform float iTime;
+    float alpha = 1.0;
+
+    const float PERIOD = 1.0;
 
     void main() {
-        float coef = uBrightness;
+        float alpha = mod(iTime, PERIOD) < PERIOD * 0.5 ? 1.0 : 0.0;
 
-        vec3 color = texture2D(uDiffuse, vUv).rgb;
-        vec3 calculatedColor = color * coef;
-
-        gl_FragColor = vec4(vec3(calculatedColor), 1.0);
+        gl_FragColor = vec4(1.0, 0.0, 0.0, alpha);
     }
     `,
 })
@@ -165,7 +152,8 @@ let elapsed = 0
 
 const tick = () => {
     const delta = clock.getDelta()
-    elapsed += delta
+
+    planeMaterial.uniforms.iTime.value += delta
 
     stats.update()
     controls.update()
